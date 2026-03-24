@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Todos — Professores, Turmas e Disciplinas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container py-4">
+    <div class="page-header d-flex justify-content-between align-items-center">
+      <h3>Dados da Escola</h3>
+      <div>
+        <!-- <a href="login.html" class="btn btn-outline-light me-2">Início</a> -->
+        <button id="btn-refresh" class="btn btn-light text-primary">Atualizar</button>
+      </div>
+    </div>
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Professores</h5>
+            <div>
+              <small id="prof-count" class="small-muted me-2">—</small>
+              <button class="btn btn-sm btn-success" onclick="openProfessorModal()">Adicionar</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-sm table-hover">
+              <thead class="table-light"><tr><th>ID</th><th>Nome</th><th>Email</th><th>Disciplinas permitidas</th><th>Ações</th></tr></thead>
+              <tbody id="professores-tbody"><tr><td colspan="5" class="text-center small-muted">A carregar…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Turmas</h5>
+            <div>
+              <small id="turma-count" class="small-muted me-2">—</small>
+              <button class="btn btn-sm btn-success" onclick="openTurmaModal()">Adicionar</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-sm table-hover">
+              <thead class="table-light"><tr><th>Ano</th><th>Curso</th><th>Ações</th></tr></thead>
+              <tbody id="turmas-tbody"><tr><td colspan="3" class="text-center small-muted">A carregar…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-4">
+      <div class="col-12">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Disciplinas</h5>
+            <div>
+              <small id="disc-count" class="small-muted me-2">—</small>
+              <button class="btn btn-sm btn-success" onclick="openDisciplinaModal()">Adicionar</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-sm table-hover">
+              <thead class="table-light"><tr><th>ID</th><th>Nome</th><th>Descrição</th><th>Turma</th><th>Sala</th><th>ID Professor</th><th>Professor</th><th>Dia</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead>
+              <tbody id="disciplinas-tbody"><tr><td colspan="11" class="text-center small-muted">A carregar…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="script.js"></script>
+
+<!-- Modals -->
+<!-- Professor Modal -->
+<div class="modal fade" id="professorModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Professor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="professorForm">
+          <div class="mb-3">
+            <label for="profNome" class="form-label">Nome</label>
+            <input type="text" class="form-control" id="profNome" required>
+          </div>
+          <div class="mb-3">
+            <label for="profEmail" class="form-label">Email</label>
+            <input type="email" class="form-control" id="profEmail" required>
+          </div>
+          <div class="mb-3">
+            <label for="profDisciplinas" class="form-label">Disciplinas Permitidas</label>
+            <input type="text" class="form-control" id="profDisciplinas">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="saveProfessor()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Turma Modal -->
+<div class="modal fade" id="turmaModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Turma</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="turmaForm">
+          <div class="mb-3">
+            <label for="turmaAno" class="form-label">Ano</label>
+            <input type="text" class="form-control" id="turmaAno" required>
+          </div>
+          <div class="mb-3">
+            <label for="turmaCurso" class="form-label">Curso</label>
+            <input type="text" class="form-control" id="turmaCurso" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="saveTurma()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Disciplina Modal -->
+<div class="modal fade" id="disciplinaModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Disciplina</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="disciplinaForm">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discNome" class="form-label">Nome da Disciplina</label>
+                <input type="text" class="form-control" id="discNome" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discDescricao" class="form-label">Descrição</label>
+                <input type="text" class="form-control" id="discDescricao">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discTurma" class="form-label">Turma</label>
+                <input type="text" class="form-control" id="discTurma" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discSala" class="form-label">Sala</label>
+                <input type="number" class="form-control" id="discSala" min="1" max="12" required>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discProfessor" class="form-label">ID Professor</label>
+                <input type="number" class="form-control" id="discProfessor" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discDia" class="form-label">Dia da Semana</label>
+                <select class="form-control" id="discDia" required>
+                  <option value="">Selecione</option>
+                  <option value="Segunda">Segunda</option>
+                  <option value="Terça">Terça</option>
+                  <option value="Quarta">Quarta</option>
+                  <option value="Quinta">Quinta</option>
+                  <option value="Sexta">Sexta</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discInicio" class="form-label">Hora Início</label>
+                <input type="time" class="form-control" id="discInicio" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discFim" class="form-label">Hora Fim</label>
+                <input type="time" class="form-control" id="discFim" required>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="saveDisciplina()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
