@@ -1,0 +1,12 @@
+<?php
+$servidor = "127.0.0.1";
+$utilizador = "root";
+$password = "";
+$base_dados = "gestor_de_escola";
+
+$ligacao = mysqli_connect($servidor, $utilizador, $password, $base_dados, 3306);
+
+if (!$ligacao) {
+    die("Erro na ligação: " . mysqli_connect_error());
+}
+?>
