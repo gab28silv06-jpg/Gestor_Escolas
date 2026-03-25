@@ -1,0 +1,81 @@
+<?php
+include "ligacao.php";
+
+if(isset($_POST['adicionar'])){
+    $nome = $_POST['nome'];
+    $email = $_POST['email'];
+
+    $sql = "INSERT INTO professores (nome, email) VALUES ('$nome', '$email')";
+    mysqli_query($ligacao, $sql);
+}
+
+if(isset($_GET['remover'])){
+    $id = $_GET['remover'];
+
+    $sql = "DELETE FROM professores WHERE id_professor = $id";
+    mysqli_query($ligacao, $sql);
+}
+
+$resultado = mysqli_query($ligacao, "SELECT * FROM professores");
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Professores</title>
+</head>
+<body>
+
+<h2>Adicionar Professor</h2>
+
+<form method="POST">
+
+Nome:<br>
+<input type="text" name="nome" required><br><br>
+
+Email:<br>
+<input type="email" name="email"><br><br>
+
+<button type="submit" name="adicionar">Adicionar</button>
+
+</form>
+
+<hr>
+
+<h2>Lista de Professores</h2>
+
+<table border="1">
+
+<tr>
+<th>ID</th>
+<th>Nome</th>
+<th>Email</th>
+<th>Ação</th>
+</tr>
+
+<?php
+while($prof = mysqli_fetch_assoc($resultado)){
+?>
+
+<tr>
+
+<td><?php echo $prof['id_professor']; ?></td>
+<td><?php echo $prof['nome']; ?></td>
+<td><?php echo $prof['email']; ?></td>
+
+<td>
+<a href="?remover=<?php echo $prof['id_professor']; ?>">
+Remover
+</a>
+</td>
+
+</tr>
+
+<?php
+}
+?>
+
+</table>
+
+</body>
+</html>
