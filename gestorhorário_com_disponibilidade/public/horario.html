@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestor de Horário - Prof</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+          --blue: #2B7FD4; --blue-dark: #1a5fa8; --blue-light: #ddeeff;
+          --blue-hover: #e8f2fc; --green: #2d7a4f; --sidebar-w: 220px;
+          --sidebar-w-collapsed: 60px; --text: #1a1a2e; --muted: #6b7280;
+          --border: #e5e7eb; --bg: #f4f6fb; --white: #ffffff;
+          --shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+        .sidebar { width: var(--sidebar-w); background: var(--white); display: flex; flex-direction: column; border-right: 1px solid var(--border); transition: width 0.25s ease; overflow: hidden; flex-shrink: 0; box-shadow: 2px 0 8px rgba(0,0,0,0.04); z-index: 10; }
+        .sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+        .sidebar-header { background: var(--blue); padding: 0 14px; height: 52px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .hamburger { background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: background 0.15s; flex-shrink: 0; }
+        .hamburger:hover { background: rgba(255,255,255,0.15); }
+        .logo-area { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+        .logo-icon { width: 28px; height: 28px; background: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-icon i { color: var(--blue); font-size: 14px; }
+        .logo-text { font-size: 20px; font-weight: 800; color: white; letter-spacing: 1px; white-space: nowrap; transition: opacity 0.2s; }
+        .sidebar.collapsed .logo-text { opacity: 0; }
+        .nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s, color 0.15s; color: var(--muted); font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; user-select: none; }
+        .nav-item i { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+        .nav-item span { transition: opacity 0.2s; }
+        .sidebar.collapsed .nav-item span { opacity: 0; }
+        .nav-item:hover { background: var(--blue-hover); color: var(--blue); }
+        .nav-item.active { background: var(--blue-light); color: var(--blue); }
+        .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .school-logo { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; transition: opacity 0.2s; }
+        .sidebar.collapsed .school-logo { opacity: 0; }
+        .school-logo-circle { width: 46px; height: 46px; border: 2px solid var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .school-logo-circle i { color: var(--blue); font-size: 18px; }
+        .school-name { font-size: 9px; color: var(--muted); font-weight: 700; line-height: 1.3; max-width: 140px; }
+
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { background: var(--blue); height: 52px; display: flex; align-items: center; justify-content: flex-end; padding: 0 20px; flex-shrink: 0; }
+        .avatar-btn { width: 36px; height: 36px; background: var(--green); border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: border-color 0.15s; }
+        .avatar-btn:hover { border-color: white; }
+        .dropdown { position: absolute; top: 52px; right: 16px; background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.14); min-width: 190px; padding: 8px; z-index: 100; display: none; animation: fadeIn 0.15s ease; }
+        .dropdown.open { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+        .dropdown-avatar { width: 30px; height: 30px; background: var(--green); border-radius: 50%; color: white; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .dropdown-name { font-size: 13px; font-weight: 700; color: var(--text); }
+        .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text); transition: background 0.12s; }
+        .dropdown-item:hover { background: var(--blue-hover); color: var(--blue); }
+        .dropdown-item.danger { color: #dc2626; }
+        .dropdown-item.danger:hover { background: #fef2f2; }
+        .dropdown-item i { width: 16px; text-align: center; font-size: 13px; }
+
+        .content { flex: 1; overflow-y: auto; padding: 28px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .schedule-container {
+            display: grid;
+            grid-template-columns: 80px repeat(5, 1fr);
+            border: 1px solid #ddd;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .grid-header {
+            background: #f8f9fa;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 2px solid #dee2e6;
+            border-right: 1px solid #ddd;
+        }
+        .time-labels-container { grid-column: 1; display: flex; flex-direction: column; }
+        .time-slot-label {
+            height: 60px;
+            border-bottom: 1px solid #eee;
+            border-right: 1px solid #ddd;
+            padding: 5px;
+            font-size: 0.8rem;
+            text-align: center;
+            background: #fdfdfd;
+        }
+        .day-column {
+            position: relative;
+            height: 840px;
+            border-right: 1px solid #eee;
+            background-image: linear-gradient(#eee 1px, transparent 1px);
+            background-size: 100% 60px;
+        }
+        .aula-block {
+            position: absolute;
+            left: 5%; width: 90%;
+            color: white;
+            border-radius: 4px;
+            padding: 6px;
+            font-size: 0.8rem;
+            overflow: hidden;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .color-0 { background: linear-gradient(135deg, #4f46e5, #6d64f5); }
+        .color-1 { background: linear-gradient(135deg, #059669, #10b981); }
+        .color-2 { background: linear-gradient(135deg, #d97706, #f59e0b); }
+        .color-3 { background: linear-gradient(135deg, #dc2626, #ef4444); }
+        .color-4 { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+        .color-5 { background: linear-gradient(135deg, #0891b2, #06b6d4); }
+        .color-6 { background: linear-gradient(135deg, #be185d, #ec4899); }
+        .color-7 { background: linear-gradient(135deg, #065f46, #34d399); }
+        .aula-block:hover { transform: scale(1.02); z-index: 20; }
+        .aula-header { display: flex; justify-content: space-between; align-items: flex-start; line-height: 1.2; }
+        .aula-datas { font-size: 0.65rem; text-align: right; opacity: 0.9; }
+        .badge-turma { font-size: 0.7rem; background: rgba(255,255,255,0.2); padding: 2px 4px; border-radius: 3px; }
+
+        @media (max-width: 900px) { .content { padding: 16px; } .sidebar { display:none; } }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="logo-area">
+      <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+      <span class="logo-text">GOP</span>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" id="nav-horario" onclick="showPage('horario')">
+      <i class="fas fa-home"></i><span>Horário</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="school-logo">
+      <div class="school-logo-circle"><i class="fas fa-school"></i></div>
+      <div class="school-name">Escola Profissional<br>Bento de Jesus Caraça</div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div style="position:relative;">
+      <div class="avatar-btn" id="avatar-btn" onclick="toggleDropdown()"></div>
+      <div class="dropdown" id="dropdown">
+        <div class="dropdown-header">
+          <div class="dropdown-avatar" id="dropdown-avatar"></div>
+          <span class="dropdown-name" id="dropdown-name">Nome do Professor</span>
+        </div>
+        <div class="dropdown-item danger" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Sair
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page active" id="page-horario">
+      <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Professor: <span id="nome-prof" class="text-primary"></span></h2>
+            <div>
+                <button onclick="abrirNovaAula()">Nova Aula</button>
+                <button class="btn btn-secondary ms-2" onclick="showDisponibilidadeModal()">Gerir Disponibilidade</button>
+                 <button class="btn btn-outline-danger" onclick="logout()">Sair</button>
+            </div>
+        </div>
+        <div class="schedule-container">
+            <div class="grid-header">Hora</div>
+            <div class="grid-header">Segunda</div>
+            <div class="grid-header">Terça</div>
+            <div class="grid-header">Quarta</div>
+            <div class="grid-header">Quinta</div>
+            <div class="grid-header">Sexta</div>
+            <div class="time-labels-container" id="time-labels"></div>
+            <div class="day-column" id="col-Segunda"></div>
+            <div class="day-column" id="col-Terça"></div>
+            <div class="day-column" id="col-Quarta"></div>
+            <div class="day-column" id="col-Quinta"></div>
+            <div class="day-column" id="col-Sexta"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL: Nova Aula
+     Turmas e disciplinas carregadas da BD.
+     Horário escolhido da disponibilidade do professor.
+════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalAdd" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Marcar Nova Aula</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <label class="form-label fw-semibold">Disciplina</label>
+                <!-- Opções carregadas dinamicamente via /disciplinas -->
+                <select id="add-nome" class="form-select mb-3">
+                    <option>A carregar...</option>
+                </select>
+
+                <label class="form-label fw-semibold">Turma</label>
+                <!-- Opções carregadas dinamicamente via /turmas -->
+                <select id="add-turma" class="form-select mb-3">
+                    <option>A carregar...</option>
+                </select>
+
+                <label class="form-label fw-semibold">Horário disponível</label>
+                <!-- Opções carregadas via /disponibilidade/:id_professor (JOIN horarios) -->
+                <!-- value = id_horario | texto = "Segunda, 08:00 – 08:45" -->
+                <select id="add-horario" class="form-select mb-3">
+                    <option>A carregar...</option>
+                </select>
+
+                <label class="form-label fw-semibold">Sala</label>
+                <select id="add-sala" class="form-select mb-3">
+                    <option value="">-- Sem sala --</option>
+                    <option>Sala 1</option><option>Sala 2</option><option>Sala 3</option>
+                    <option>Sala 4</option><option>Sala 5</option><option>Sala 6</option>
+                    <option>Sala 7</option><option>Sala 8</option><option>Sala 9</option>
+                    <option>Sala 10</option><option>Sala 11</option><option>Sala 12</option>
+                </select>
+
+                <label class="form-label fw-semibold">Descrição</label>
+                <textarea id="add-desc" class="form-control" rows="2"
+                    placeholder="Ex: Trazer portáteis"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary w-100" onclick="salvarDisciplina()">Salvar Aula</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL: Editar Aula
+     edit-id guarda id_atribuicao (não id_disciplina).
+     Selects carregados no DOMContentLoaded.
+════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalEdicao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Editar Detalhes da Aula</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Guarda id_atribuicao (antes era id_disciplina) -->
+                <input type="hidden" id="edit-id">
+
+                <label class="form-label fw-semibold">Disciplina</label>
+                <select id="edit-nome" class="form-select mb-3"></select>
+
+                <label class="form-label fw-semibold">Turma</label>
+                <select id="edit-turma" class="form-select mb-3"></select>
+
+                <label class="form-label fw-semibold">Horário</label>
+                <!-- value = id_horario; texto = "Segunda, 08:00 – 08:45" -->
+                <select id="edit-horario" class="form-select mb-3"></select>
+
+                <label class="form-label fw-semibold">Sala</label>
+                <select id="edit-sala" class="form-select mb-3">
+                    <option value="">-- Sem sala --</option>
+                    <option>Sala 1</option><option>Sala 2</option><option>Sala 3</option>
+                    <option>Sala 4</option><option>Sala 5</option><option>Sala 6</option>
+                    <option>Sala 7</option><option>Sala 8</option><option>Sala 9</option>
+                    <option>Sala 10</option><option>Sala 11</option><option>Sala 12</option>
+                </select>
+
+                <label class="form-label fw-semibold">Descrição</label>
+                <textarea id="edit-desc" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button class="btn btn-danger"  onclick="eliminarDisciplina()">Eliminar</button>
+                <button class="btn btn-primary" onclick="guardarAlteracoes()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Gerir Disponibilidade -->
+<div class="modal fade" id="modalDisponibilidade" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Gerir Disponibilidade</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label class="form-label">Dia</label>
+            <select id="disp-dia" class="form-select">
+              <option>Segunda</option>
+              <option>Terça</option>
+              <option>Quarta</option>
+              <option>Quinta</option>
+              <option>Sexta</option>
+              <option>Sábado</option>
+              <option>Domingo</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Início</label>
+            <input type="time" id="disp-inicio" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Fim</label>
+            <input type="time" id="disp-fim" class="form-control">
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <input type="hidden" id="disp-id">
+            <button class="btn btn-primary w-100" onclick="salvarDisponibilidade()">Guardar</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead><tr><th>Dia</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead>
+            <tbody id="disponibilidade-body">
+              <tr><td colspan="4" class="text-center">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API = 'http://localhost:3000';
+    const HORA_INICIO_DIA = 8;
+
+    // ─── Helpers de UI ───────────────────────────────────────────────────────────
+    function showPage(page) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const el = document.getElementById('page-' + page);
+        if (el) el.classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        const navEl = document.getElementById('nav-' + page);
+        if (navEl) navEl.classList.add('active');
+    }
+    function toggleSidebar()  { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function toggleDropdown() { document.getElementById('dropdown').classList.toggle('open'); }
+    function closeDropdown()  { document.getElementById('dropdown').classList.remove('open'); }
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.avatar-btn') && !e.target.closest('.dropdown')) closeDropdown();
+    });
+
+    // ─── Inicialização ───────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+        const profId   = localStorage.getItem('professor_id');
+        const profNome = localStorage.getItem('professor_nome');
+        const userRole = localStorage.getItem('userRole');        // ex: "admin" ou "professor"
+        const userId   = localStorage.getItem('professor_id');    // ou user_id
+
+        if (!profId) { window.location.href = 'index.html'; return; }
+
+        document.getElementById('nome-prof').innerText = profNome || 'Professor';
+        const ddName = document.getElementById('dropdown-name');
+        if (ddName) ddName.innerText = profNome || 'Professor';
+
+        const initial = profNome?.trim().charAt(0).toUpperCase() || '?';
+        const avatarEl = document.getElementById('avatar-btn');
+        if (avatarEl) avatarEl.textContent = initial;
+        const ddAvatar = document.getElementById('dropdown-avatar');
+        if (ddAvatar) ddAvatar.textContent = initial;
+
+        // ✅ FIX 1: Promise.all limpo, sem código inválido dentro do array
+        await Promise.all([
+            preencherDropdownsDisciplinas(),
+            carregarTurmas(),
+            carregarHorariosDisponiveis(profId)
+        ]);
+
+        desenharEtiquetasHoras();
+        carregarHorario();
+    });
+
+    let professorSelecionado = null;
+
+    async function carregarDisponibilidade() {
+        const disponibilidadeBody = document.getElementById('disponibilidade-body');
+        disponibilidadeBody.innerHTML = '';
+
+        if (userRole === 'admin') {
+            // Mostra seletor de professor
+            document.getElementById('admin-professor-selector').style.display = 'block';
+            
+            if (!professorSelecionado) {
+                disponibilidadeBody.innerHTML = `<tr><td colspan="3" class="text-center">Selecione um professor</td></tr>`;
+                return;
+            }
+        } else {
+            // Professor normal
+            document.getElementById('admin-professor-selector').style.display = 'none';
+            professorSelecionado = userId;
+        }
+
+        const idParaCarregar = professorSelecionado || userId;
+        
+        const res = await fetch(`http://localhost:3000/disponibilidade/${idParaCarregar}`);
+        const horarios = await res.json();
+
+        // ... resto do código para preencher a tabela
+    }
+
+    // ─── Dropdowns dinâmicos ─────────────────────────────────────────────────────
+    async function preencherDropdownsDisciplinas() {
+        const permitidas = (localStorage.getItem('disciplinas_permitidas') || '')
+            .split(',').map(s => s.trim()).filter(Boolean);
+        try {
+            const res = await fetch(`${API}/disciplinas`);
+            const disciplinas = await res.json();
+
+            const filtradas = permitidas.length
+                ? disciplinas.filter(d => permitidas.includes(d.nome_disciplina))
+                : disciplinas;
+
+            const html = filtradas.length
+                ? filtradas.map(d =>
+                    `<option value="${d.id_disciplina}">${d.nome_disciplina}</option>`
+                  ).join('')
+                : '<option value="">Sem disciplinas atribuídas</option>';
+
+            ['add-nome', 'edit-nome'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = html;
+            });
+        } catch (e) {
+            console.error('Erro ao carregar disciplinas:', e);
+        }
+    }
+
+    async function carregarTurmas() {
+        try {
+            const res    = await fetch(`${API}/turmas`);
+            const turmas = await res.json();
+
+            const html = turmas.map(t =>
+                `<option value="${t.id_turma}">${t.ano} ${t.curso}</option>`
+            ).join('');
+
+            ['add-turma', 'edit-turma'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = html;
+            });
+        } catch (e) {
+            console.error('Erro ao carregar turmas:', e);
+        }
+    }
+
+    async function carregarHorariosDisponiveis(profId) {
+        try {
+            const res      = await fetch(`${API}/disponibilidade/${profId}`);
+            const horarios = await res.json();
+
+            const html = horarios.length
+                ? horarios.map(h =>
+                    `<option value="${h.id_horario || h.id_disponibilidade}">
+                        ${h.dia_semana}, ${h.hora_inicio.slice(0,5)} – ${h.hora_fim.slice(0,5)}
+                     </option>`
+                  ).join('')
+                : '<option value="">Sem disponibilidade registada</option>';
+
+            ['add-horario', 'edit-horario'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = html;
+            });
+        } catch (e) {
+            console.error('Erro ao carregar horários disponíveis:', e);
+        }
+    }
+
+    // ─── Desenhar etiquetas de horas na grelha (corrige erro ReferenceError) ───
+    function desenharEtiquetasHoras() {
+        const container = document.getElementById('time-labels');
+        if (!container) return;
+        container.innerHTML = '';
+        const totalHoras = 14; // 8:00 - 21:00 por defeito (14 etiquetas de 1h)
+        for (let i = 0; i < totalHoras; i++) {
+            const hora = HORA_INICIO_DIA + i;
+            const hStr = String(hora).padStart(2, '0') + ':00';
+            container.innerHTML += `<div class="time-slot-label">${hStr}</div>`;
+        }
+    }
+
+    // ─── Utilitários de tempo ──────────────────────────────────────────────────
+    function calcularMinutos(timeStr) {
+        if (!timeStr) return 0;
+        const parts = timeStr.split(':').map(Number);
+        if (parts.length < 2) return 0;
+        const [h, m] = parts;
+        return (h - HORA_INICIO_DIA) * 60 + m;
+    }
+
+    // ─── Carregar e desenhar o horário do professor na grelha ────────────────
+    async function carregarHorario() {
+        const profId = localStorage.getItem('professor_id');
+        if (!profId) return;
+
+        const corPorDisciplina = {};
+        let proximaCor = 0;
+        function getCorDisciplina(nome) {
+            if (corPorDisciplina[nome] === undefined) corPorDisciplina[nome] = proximaCor++ % 8;
+            return corPorDisciplina[nome];
+        }
+
+        try {
+            const res = await fetch(`${API}/meu-horario/${profId}`);
+            const dados = await res.json();
+            if (!Array.isArray(dados)) return;
+
+            // limpar colunas
+            document.querySelectorAll('.day-column').forEach(col => col.innerHTML = '');
+
+            dados.forEach(d => {
+                if (!d.dia_semana) return;
+                const dia = d.dia_semana.trim();
+                const col = document.getElementById(`col-${dia}`);
+                if (!col) return;
+
+                const startMin = calcularMinutos(d.hora_inicio);
+                const duracao = calcularMinutos(d.hora_fim) - startMin;
+
+                const block = document.createElement('div');
+                block.className = `aula-block color-${getCorDisciplina(d.nome_disciplina || d.nome)}`;
+                block.style.top = `${startMin}px`;
+                block.style.height = `${Math.max(duracao, 30)}px`;
+
+                // Permitir abrir edição quando clicado - passar dados como JSON codificado
+                const payload = Object.assign({}, d);
+                const encoded = encodeURIComponent(JSON.stringify(payload));
+                block.onclick = () => abrirEdicao(encoded);
+
+                block.innerHTML = `
+                    <div class="aula-header">
+                        <div>
+                            <strong>${d.nome_disciplina || d.nome || 'Aula'}</strong>
+                            <div class="badge-turma">${d.turma || ''}</div>
+                        </div>
+                        <div class="aula-datas">
+                            ${String(d.hora_inicio).slice(0,5)} – ${String(d.hora_fim).slice(0,5)}
+                            <br><small>${d.sala || ''}</small>
+                        </div>
+                    </div>
+                `;
+
+                col.appendChild(block);
+            });
+        } catch (e) {
+            console.error('Erro ao carregar horário:', e);
+        }
+    }
+
+    // ─── Gestão de disponibilidade (CRUD) ─────────────────────────────────────
+    function showDisponibilidadeModal() {
+        const profId = localStorage.getItem('professor_id');
+        if (!profId) { alert('Sessão expirada. Faz login.'); window.location.href = 'index.html'; return; }
+        carregarDisponibilidade(profId);
+        new bootstrap.Modal(document.getElementById('modalDisponibilidade')).show();
+    }
+
+    async function carregarDisponibilidade(profId) {
+        try {
+            const res = await fetch(`${API}/disponibilidade/${profId}`);
+            const dados = await res.json();
+
+            const tbody = document.getElementById('disponibilidade-body');
+            if (!Array.isArray(dados) || dados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhuma disponibilidade registada.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = dados.map(d => `
+                <tr>
+                    <td>${d.dia_semana}</td>
+                    <td>${d.hora_inicio.slice(0,5)}</td>
+                    <td>${d.hora_fim.slice(0,5)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="abrirEdicaoDisponibilidade(${d.id_disponibilidade})">Editar</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarDisponibilidade(${d.id_disponibilidade})">Apagar</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error('Erro ao carregar disponibilidade:', e);
+        }
+    }
+
+    async function salvarDisponibilidade() {
+        const profId = localStorage.getItem('professor_id');
+        if (!profId) { alert('Sessão expirada. Faz login.'); window.location.href = 'index.html'; return; }
+
+        const id = document.getElementById('disp-id').value;
+        const dia = document.getElementById('disp-dia').value;
+        const inicio = document.getElementById('disp-inicio').value;
+        const fim = document.getElementById('disp-fim').value;
+
+        if (!dia || !inicio || !fim) { alert('Preenche dia, início e fim.'); return; }
+
+        // converter para minutos
+        function toMinutes(t){ const [hh,mm] = t.split(':').map(Number); return hh*60 + mm; }
+        const startMin = toMinutes(inicio);
+        const endMin = toMinutes(fim);
+        if (endMin <= startMin) { alert('Hora de fim deve ser depois da hora de início.'); return; }
+
+        try {
+            // buscar disponibilidades existentes para evitar duplicados
+            const resExist = await fetch(`${API}/disponibilidade/${profId}`);
+            const existList = await resExist.json();
+
+            const existingSet = new Set(existList.map(d => `${d.dia_semana}|${d.hora_inicio.slice(0,5)}|${d.hora_fim.slice(0,5)}`));
+
+            // criar slots de 1h (ex: 08:00-09:00, 09:00-10:00, ...)
+            const promises = [];
+            for (let t = startMin; t + 60 <= endMin; t += 60) {
+                const h1 = String(Math.floor(t/60)).padStart(2,'0') + ':' + String(t%60).padStart(2,'0');
+                const h2Min = t + 60;
+                const h2 = String(Math.floor(h2Min/60)).padStart(2,'0') + ':' + String(h2Min%60).padStart(2,'0');
+                const key = `${dia}|${h1}|${h2}`;
+                if (existingSet.has(key)) continue; // já existe
+
+                const payload = { id_professor: profId, dia_semana: dia, hora_inicio: h1, hora_fim: h2 };
+                promises.push(fetch(`${API}/disponibilidade`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                }));
+            }
+
+            if (promises.length === 0) {
+                alert('Nenhum novo slot para adicionar (já existe ou intervalo muito pequeno).');
+                return;
+            }
+
+            const results = await Promise.all(promises);
+            const failed = [];
+            for (const r of results) if (!r.ok) failed.push(await r.json().catch(()=>({})));
+
+            if (failed.length === 0) {
+                // limpar form
+                document.getElementById('disp-id').value = '';
+                document.getElementById('disp-inicio').value = '';
+                document.getElementById('disp-fim').value = '';
+                document.getElementById('disp-dia').selectedIndex = 0;
+                const prof = localStorage.getItem('professor_id');
+                carregarDisponibilidade(prof);
+                carregarHorariosDisponiveis(prof);
+            } else {
+                alert('Alguns slots não puderam ser guardados. Veja consola.');
+                console.error('Falhas ao guardar disponibilidade:', failed);
+            }
+        } catch (e) {
+            console.error('Erro ao guardar disponibilidade:', e);
+            alert('Erro ao guardar disponibilidade. Veja o console.');
+        }
+    }
+
+    async function abrirEdicaoDisponibilidade(id) {
+        try {
+            // carregar só esta disponibilidade (reaproveitar lista)
+            const profId = localStorage.getItem('professor_id');
+            const res = await fetch(`${API}/disponibilidade/${profId}`);
+            const dados = await res.json();
+            const d = dados.find(x => x.id_disponibilidade == id);
+            if (!d) return alert('Disponibilidade não encontrada.');
+
+            document.getElementById('disp-id').value = d.id_disponibilidade;
+            document.getElementById('disp-dia').value = d.dia_semana;
+            document.getElementById('disp-inicio').value = d.hora_inicio.slice(0,5);
+            document.getElementById('disp-fim').value = d.hora_fim.slice(0,5);
+        } catch (e) {
+            console.error('Erro ao abrir edição da disponibilidade:', e);
+        }
+    }
+
+    async function eliminarDisponibilidade(id) {
+        if (!confirm('Apagar este horário de disponibilidade?')) return;
+        try {
+            const res = await fetch(`${API}/disponibilidade/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                const prof = localStorage.getItem('professor_id');
+                carregarDisponibilidade(prof);
+                carregarHorariosDisponiveis(prof);
+            } else {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || 'Erro ao apagar disponibilidade.');
+            }
+        } catch (e) {
+            console.error('Erro ao apagar disponibilidade:', e);
+        }
+    }
+
+    // ─── Modais ──────────────────────────────────────────────────────────────────
+
+    // ✅ FIX 2a: Função para abrir o modal em modo criação (limpa edit-id)
+    function abrirNovaAula() {
+        document.getElementById('edit-id').value      = '';
+        document.getElementById('edit-nome').selectedIndex    = 0;
+        document.getElementById('edit-turma').selectedIndex   = 0;
+        document.getElementById('edit-horario').selectedIndex = 0;
+        document.getElementById('edit-sala').value    = '';
+        document.getElementById('edit-desc').value    = '';
+
+        const titulo = document.querySelector('#modalEdicao .modal-title');
+        if (titulo) titulo.textContent = 'Nova Aula';
+
+        new bootstrap.Modal(document.getElementById('modalEdicao')).show();
+    }
+
+    function abrirEdicao(json) {
+        const d = JSON.parse(decodeURIComponent(json));
+
+        document.getElementById('edit-id').value      = d.id_atribuicao;
+        document.getElementById('edit-nome').value    = d.id_disciplina;
+        document.getElementById('edit-turma').value   = d.id_turma;
+        document.getElementById('edit-horario').value = d.id_horario;
+        document.getElementById('edit-sala').value    = d.sala      || '';
+        document.getElementById('edit-desc').value    = d.descricao || '';
+
+        const titulo = document.querySelector('#modalEdicao .modal-title');
+        if (titulo) titulo.textContent = 'Editar Aula';
+
+        new bootstrap.Modal(document.getElementById('modalEdicao')).show();
+    }
+
+    // ─── CRUD ────────────────────────────────────────────────────────────────────
+    async function salvarDisciplina() {
+        const profId = localStorage.getItem('professor_id');
+        if (!profId || profId === 'undefined') {
+            alert('Sessão expirada. Faz login de novo!');
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const idHorario = document.getElementById('add-horario').value;
+        if (!idHorario) { alert('Seleciona um horário disponível!'); return; }
+
+        const payload = {
+            id_professor:  profId,
+            id_disciplina: document.getElementById('add-nome').value,
+            id_turma:      document.getElementById('add-turma').value,
+            id_horario:    idHorario,
+            sala:          document.getElementById('add-sala').value,
+            descricao:     document.getElementById('add-desc').value
+        };
+
+        const res = await fetch(`${API}/atribuicoes`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            location.reload();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.message || 'Erro ao salvar a aula. Verifica conflitos de horário.');
+        }
+    }
+
+    // ✅ FIX 2b: Distingue criação (POST) de edição (PUT) pelo edit-id
+    async function guardarAlteracoes() {
+        const id     = document.getElementById('edit-id').value;
+        const profId = localStorage.getItem('professor_id');
+
+        const idHorario = document.getElementById('edit-horario').value;
+        if (!idHorario) { alert('Seleciona um horário disponível!'); return; }
+
+        const payload = {
+            id_disciplina: document.getElementById('edit-nome').value,
+            id_turma:      document.getElementById('edit-turma').value,
+            id_horario:    idHorario,
+            sala:          document.getElementById('edit-sala').value,
+            descricao:     document.getElementById('edit-desc').value
+        };
+
+        // Sem id → criação nova (POST); com id → edição (PUT)
+        const url    = id ? `${API}/atribuicoes/${id}` : `${API}/atribuicoes`;
+        const method = id ? 'PUT' : 'POST';
+        if (!id) payload.id_professor = profId;
+
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            location.reload();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.message || 'Erro ao guardar as alterações.');
+        }
+    }
+
+    async function eliminarDisciplina() {
+        if (!confirm('Apagar esta aula definitivamente?')) return;
+        const id  = document.getElementById('edit-id').value;
+        const res = await fetch(`${API}/atribuicoes/${id}`, { method: 'DELETE' });
+        if (res.ok) location.reload();
+        else alert('Erro ao eliminar a aula.');
+    }
+
+    function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+</script>
+</body>
+</html>

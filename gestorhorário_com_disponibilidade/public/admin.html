@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do Diretor - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .badge-disciplina {
+            font-size: 0.75rem;
+            margin: 2px;
+            padding: 4px 8px;
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .table td, .table th {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">🛠️ Painel do Diretor</span>
+        <a href="index.html" class="btn btn-outline-light btn-sm">Sair</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card shadow-sm p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">Professores</h3>
+            <button class="btn btn-success" onclick="abrirModalAdd()">+ Novo Professor</button>
+        </div>
+
+        <table class="table table-hover table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th width="5%">ID</th>
+                    <th width="20%">Nome</th>
+                    <th width="20%">Email</th>
+                    <th>Disciplinas Permitidas</th>
+                    <th width="15%" class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-professores">
+                <tr><td colspan="5" class="text-center text-muted">A carregar...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Criar/Editar Professor -->
+<div class="modal fade" id="modalProfessor" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitulo">Adicionar Professor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="prof-id">
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nome:</label>
+                    <input type="text" id="prof-nome" class="form-control" placeholder="Ex: João Silva">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Email (usado no login):</label>
+                    <input type="email" id="prof-email" class="form-control" placeholder="Ex: joao@escola.pt">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Disciplinas Permitidas:</label>
+                    <small class="text-muted d-block mb-1">Separadas por vírgula. Ex: Matemática, Português, TIC</small>
+                    <textarea id="prof-disciplinas" class="form-control" rows="3" placeholder="Matemática, Português, TIC"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarProfessor()">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Eliminação -->
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">⚠️ Atenção!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tens a certeza que queres apagar o professor <strong id="nome-a-apagar"></strong>?</p>
+                <p class="text-danger mb-0"><small>Isto vai apagar <strong>todas as aulas</strong> do horário dele também!</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="confirmarEliminar()">Sim, apagar tudo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let modalProfInstance = null;
+    let modalEliminarInstance = null;
+    let idParaEliminar = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        modalProfInstance = new bootstrap.Modal(document.getElementById('modalProfessor'));
+        modalEliminarInstance = new bootstrap.Modal(document.getElementById('modalEliminar'));
+        carregarProfessores();
+    });
+
+    async function carregarProfessores() {
+        try {
+            const res = await fetch('http://localhost:3000/admin/professores');
+            const professores = await res.json();
+            const tbody = document.getElementById('tabela-professores');
+            tbody.innerHTML = "";
+
+            if (professores.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhum professor encontrado.</td></tr>`;
+                return;
+            }
+
+            professores.forEach(p => {
+                const dadosEncoded = encodeURIComponent(JSON.stringify(p));
+
+                // Cria os badges das disciplinas
+                const disciplinas = (p.disciplinas_permitidas || '')
+                    .split(',')
+                    .map(d => d.trim())
+                    .filter(d => d !== '')
+                    .map(d => `<span class="badge-disciplina">${d}</span>`)
+                    .join('');
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge bg-secondary">#${p.id_professor}</span></td>
+                    <td><strong>${p.nome}</strong></td>
+                    <td><a href="mailto:${p.email}" class="text-decoration-none">${p.email}</a></td>
+                    <td>${disciplinas || '<span class="text-muted">Nenhuma</span>'}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalEdit('${dadosEncoded}')">✏️ Editar</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="pedirEliminar(${p.id_professor}, '${p.nome}')">🗑️ Apagar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            console.error(err);
+            document.getElementById('tabela-professores').innerHTML =
+                `<tr><td colspan="5" class="text-center text-danger">Erro ao carregar professores. Verifica se o servidor está ligado.</td></tr>`;
+        }
+    }
+
+    function abrirModalAdd() {
+        document.getElementById('modalTitulo').innerText = "Adicionar Novo Professor";
+        document.getElementById('prof-id').value = "";
+        document.getElementById('prof-nome').value = "";
+        document.getElementById('prof-email').value = "";
+        document.getElementById('prof-disciplinas').value = "";
+        modalProfInstance.show();
+    }
+
+    function abrirModalEdit(dadosEncoded) {
+        const p = JSON.parse(decodeURIComponent(dadosEncoded));
+        document.getElementById('modalTitulo').innerText = `Editar: ${p.nome}`;
+        document.getElementById('prof-id').value = p.id_professor;
+        document.getElementById('prof-nome').value = p.nome;
+        document.getElementById('prof-email').value = p.email;
+        document.getElementById('prof-disciplinas').value = p.disciplinas_permitidas || "";
+        modalProfInstance.show();
+    }
+
+    async function salvarProfessor() {
+        const id = document.getElementById('prof-id').value;
+        const payload = {
+            nome: document.getElementById('prof-nome').value.trim(),
+            email: document.getElementById('prof-email').value.trim(),
+            disciplinas_permitidas: document.getElementById('prof-disciplinas').value.trim()
+        };
+
+        if (!payload.nome || !payload.email) {
+            alert("Nome e Email são obrigatórios!");
+            return;
+        }
+
+        const url = id
+            ? `http://localhost:3000/admin/professores/${id}`
+            : 'http://localhost:3000/admin/professores';
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                modalProfInstance.hide();
+                carregarProfessores();
+            } else {
+                const err = await res.json();
+                alert("Erro: " + (err.error || "Desconhecido"));
+            }
+        } catch (err) {
+            alert("Erro de conexão com o servidor.");
+        }
+    }
+
+    function pedirEliminar(id, nome) {
+        idParaEliminar = id;
+        document.getElementById('nome-a-apagar').innerText = nome;
+        modalEliminarInstance.show();
+    }
+
+    async function confirmarEliminar() {
+        if (!idParaEliminar) return;
+
+        try {
+            const res = await fetch(`http://localhost:3000/admin/professores/${idParaEliminar}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                modalEliminarInstance.hide();
+                idParaEliminar = null;
+                carregarProfessores();
+            } else {
+                alert("Erro ao apagar.");
+            }
+        } catch (err) {
+            alert("Erro de conexão.");
+        }
+    }
+</script>
+</body>
+</html>

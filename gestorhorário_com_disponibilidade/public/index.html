@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Gestor de Escola</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(90deg,rgb(136, 214, 246) 0%, rgb(241, 255, 255) 50%, rgb(136, 214, 246) 100%);
+            padding: 20px;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 620px;
+            background: #fff;
+            display: flex;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        /* Lado do Formulário */
+        .form-side {
+            flex: 1;
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h1 {
+            color: #1a237e;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        /* Inputs e Botões */
+        .input-group-custom {
+            background: #f0f2f5;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+        }
+
+        .input-group-custom i {
+            color: #999;
+            margin-right: 8px;
+        }
+
+        .input-group-custom input {
+            background: transparent;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .btn-main {
+            background: #5c6bc0;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-main:hover {
+            background: #3f51b5;
+        }
+
+        /* Lado da Imagem (A curva) */
+        .image-side {
+            flex: 1.2;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 0% 100%);
+        }
+
+        .illustration-placeholder img {
+            width: 110%;
+            z-index: 2;
+            position: relative;
+        }
+
+        .hidden { display: none; }
+
+        .error-text {
+            color: #d32f2f;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 900px) {
+            .main-container { flex-direction: column; height: auto; }
+            .image-side { clip-path: none; width: 100%; height: 240px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="form-side">
+
+            <div id="step-login" class="form-box">
+                <h1 id="login-title">Login</h1>
+                <p class="subtitle">Acesse sua conta de Professor</p>
+
+                <div class="input-group-custom">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="nome" placeholder="Nome do Professor">
+                </div>
+                <div class="input-group-custom">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" placeholder="Email">
+                </div>
+
+                <button class="btn-main" onclick="fazerLogin()">Entrar</button>
+                <div id="erro" class="error-text"></div>
+
+            </div>
+
+        </div>
+
+        <div class="image-side">
+            <div class="illustration-placeholder">
+                <img src="https://illustrations.popsy.co/blue/studying.svg" alt="Ilustração">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fazerLogin() {
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            try {
+                const res = await fetch('http://localhost:3000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, email })
+                });
+
+                const dados = await res.json();
+                if (res.ok) {
+                    // Guarda o ID do professor para saber de quem é o horário
+                    localStorage.setItem('professor_id', dados.professor.id_professor);
+                    localStorage.setItem('professor_nome', dados.professor.nome);
+                    localStorage.setItem('disciplinas_permitidas', dados.professor.disciplinas_permitidas || "Aula Genérica");
+                    window.location.href = 'horario.html';
+                } else {
+                    document.getElementById('erro').innerText = dados.error || 'Erro no login';
+                }
+            } catch (err) {
+                document.getElementById('erro').innerText = 'Erro de conexão com o servidor.';
+            }
+        }
+    </script>
+</body>
+</html>
