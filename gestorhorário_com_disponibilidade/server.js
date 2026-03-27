@@ -39,7 +39,7 @@ app.get('/meu-horario/:id_professor', async (req, res) => {
                 a.id_disciplina,
                 d.nome_disciplina,
                 a.id_turma,
-                COALESCE(t.ano, d.turma) AS turma,
+                COALESCE(CONCAT(t.ano, ' ', t.curso), d.turma) AS turma,
                 a.sala,
                 a.descricao,
                 h.dia_semana,
