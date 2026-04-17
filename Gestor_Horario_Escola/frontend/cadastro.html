@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Educacional - Login</title>
+    <link rel="stylesheet" href="cadastro.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="form-side">
+
+            <div id="step-login" class="form-box">
+                <h1 id="login-title">Login</h1>
+                <p class="subtitle">Acesse sua conta de Professor</p>
+                
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" placeholder="Usuário ou email">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" placeholder="Senha">
+                </div>
+
+                <button class="btn-main">Entrar</button>
+                
+            </div>
+
+        </div>
+
+        <div class="image-side">
+            <div class="illustration-placeholder">
+                <div class="circle-bg"></div>
+                <img src="https://illustrations.popsy.co/blue/studying.svg" alt="Ilustração">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showStep(stepId, type = '') {
+            // Esconde todas as caixas
+            document.querySelectorAll('.form-box').forEach(box => box.classList.add('hidden'));
+            // Mostra a selecionada
+            document.getElementById(stepId).classList.remove('hidden');
+            
+            if(type) {
+                document.getElementById('user-type').innerText = type;
+            }
+        }
+    </script>
+</body>
+</html>

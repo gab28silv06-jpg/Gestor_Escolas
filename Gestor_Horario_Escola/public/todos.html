@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Todos — Professores, Turmas e Disciplinas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f4f6fb; color:#1a1a2e; font-family:system-ui, -apple-system, 'Segoe UI', Roboto, Arial; }
+    .card { border-radius:12px; }
+    .badge-muted { background:#eef2ff; color:#2b7fd4; }
+    .small-muted { color:#6b7280; font-size:0.9rem; }
+    .table-wrap { max-height:540px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3>Dados da Escola</h3>
+      <div>
+        <a href="index.html" class="btn btn-outline-secondary me-2">Início</a>
+        <button id="btn-refresh" class="btn btn-primary">Atualizar</button>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Professores</h5>
+            <small id="prof-count" class="small-muted">—</small>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-sm table-hover">
+              <thead class="table-light"><tr><th>#</th><th>Nome</th><th>Email</th><th>Disciplinas permitidas</th></tr></thead>
+              <tbody id="professores-tbody"><tr><td colspan="4" class="text-center small-muted">A carregar…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Turmas (únicas)</h5>
+            <small id="turma-count" class="small-muted">—</small>
+          </div>
+          <div id="turmas-list" class="mt-2"></div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Disciplinas</h5>
+            <small id="disc-count" class="small-muted">—</small>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-sm">
+              <thead class="table-light"><tr><th>Disciplina</th><th>Professor</th><th>Turma</th></tr></thead>
+              <tbody id="disciplinas-tbody"><tr><td colspan="3" class="text-center small-muted">A carregar…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  async function carregarTodos() {
+    const profTbody = document.getElementById('professores-tbody');
+    const discTbody = document.getElementById('disciplinas-tbody');
+    const turmasList = document.getElementById('turmas-list');
+    document.getElementById('prof-count').innerText = '—';
+    document.getElementById('disc-count').innerText = '—';
+    document.getElementById('turma-count').innerText = '—';
+
+    try {
+      const res = await fetch('/admin/professores');
+      if (!res.ok) throw new Error('Erro a obter professores');
+      const professores = await res.json();
+
+      profTbody.innerHTML = '';
+      if (!Array.isArray(professores) || professores.length === 0) {
+        profTbody.innerHTML = '<tr><td colspan="4" class="text-center small-muted">Nenhum professor encontrado.</td></tr>';
+      } else {
+        professores.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><span class="badge bg-secondary">#${p.id_professor}</span></td>
+                          <td>${p.nome}</td>
+                          <td><a href="mailto:${p.email}">${p.email}</a></td>
+                          <td>${(p.disciplinas_permitidas||'').split(',').map(s=>s.trim()).filter(Boolean).join(', ') || '<span class="small-muted">Nenhuma</span>'}</td>`;
+          profTbody.appendChild(tr);
+        });
+      }
+      document.getElementById('prof-count').innerText = (professores||[]).length;
+
+      // Buscar disciplinas de todos os professores em paralelo
+      const fetchs = (professores||[]).map(p => fetch(`/meu-horario/${p.id_professor}`).then(r=> r.ok ? r.json() : [] ).catch(()=>[]));
+      const results = await Promise.all(fetchs);
+
+      const disciplinas = [];
+      const turmasSet = new Set();
+
+      results.forEach((lista, idx) => {
+        const prof = professores[idx];
+        (lista||[]).forEach(d => {
+          disciplinas.push({
+            nome: d.nome_disciplina || d.nome || '—',
+            turma: d.turma || '—',
+            sala: d.sala || '',
+            professor: prof.nome || '—'
+          });
+          if (d.turma) turmasSet.add(d.turma);
+        });
+      });
+
+      // Popular turmas
+      try {
+        const r2 = await fetch('/turmas');
+        if (r2.ok) {
+          const turmasDb = await r2.json();
+          turmasList.innerHTML = '';
+          if (!Array.isArray(turmasDb) || turmasDb.length === 0) {
+            turmasList.innerHTML = '<div class="small-muted">Nenhuma turma encontrada.</div>';
+            document.getElementById('turma-count').innerText = 0;
+          } else {
+            turmasDb.sort((a,b)=> (String(a.ano||'')).localeCompare(String(b.ano||'')) || (a.curso||'').localeCompare(b.curso||''));
+            turmasDb.forEach(t => {
+              // tabela turmas tem colunas: id_turma, ano, curso
+              const ano = (t.ano !== undefined && t.ano !== null) ? String(t.ano) : (t.ano_turma || '');
+              const curso = t.curso || t.nome || t.designacao || '';
+              // não mostrar entradas vazias
+              if (!ano && !curso) return;
+              const span = document.createElement('span');
+              span.className = 'badge badge-muted me-1 mb-1';
+              span.innerText = (ano ? (ano + ' ano') : '') + (ano && curso ? ' · ' : '') + curso;
+              turmasList.appendChild(span);
+            });
+            document.getElementById('turma-count').innerText = turmasDb.length;
+          }
+        } else {
+          turmasList.innerHTML = '<div class="text-danger">Erro ao buscar turmas.</div>';
+          document.getElementById('turma-count').innerText = '-';
+        }
+      } catch (e) {
+        turmasList.innerHTML = '<div class="text-danger">Erro ao buscar turmas.</div>';
+        document.getElementById('turma-count').innerText = '-';
+      }
+
+      // Popular disciplinas table
+      discTbody.innerHTML = '';
+      if (disciplinas.length === 0) {
+        discTbody.innerHTML = '<tr><td colspan="3" class="text-center small-muted">Nenhuma disciplina encontrada.</td></tr>';
+      } else {
+        // ordenar por nome
+        disciplinas.sort((a,b)=> a.nome.localeCompare(b.nome));
+        disciplinas.forEach(d => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${d.nome}</td><td>${d.professor}</td><td>${d.turma}</td>`;
+          discTbody.appendChild(tr);
+        });
+      }
+      document.getElementById('disc-count').innerText = disciplinas.length;
+
+    } catch (err) {
+      console.error(err);
+      profTbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Erro a carregar dados.</td></tr>';
+      discTbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Erro a carregar dados.</td></tr>';
+      turmasList.innerHTML = '<div class="text-danger">Erro a carregar dados.</div>';
+      document.getElementById('prof-count').innerText = '-';
+      document.getElementById('disc-count').innerText = '-';
+      document.getElementById('turma-count').innerText = '-';
+    }
+  }
+
+  document.getElementById('btn-refresh').addEventListener('click', () => carregarTodos());
+  window.addEventListener('DOMContentLoaded', carregarTodos);
+</script>
+</body>
+</html>

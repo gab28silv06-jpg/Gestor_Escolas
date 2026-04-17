@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestor de Horário - Prof</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* GOP UI styles */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+          --blue: #2B7FD4; --blue-dark: #1a5fa8; --blue-light: #ddeeff;
+          --blue-hover: #e8f2fc; --green: #2d7a4f; --sidebar-w: 220px;
+          --sidebar-w-collapsed: 60px; --text: #1a1a2e; --muted: #6b7280;
+          --border: #e5e7eb; --bg: #f4f6fb; --white: #ffffff;
+          --shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+        .sidebar { width: var(--sidebar-w); background: var(--white); display: flex; flex-direction: column; border-right: 1px solid var(--border); transition: width 0.25s ease; overflow: hidden; flex-shrink: 0; box-shadow: 2px 0 8px rgba(0,0,0,0.04); z-index: 10; }
+        .sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+        .sidebar-header { background: var(--blue); padding: 0 14px; height: 52px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .hamburger { background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: background 0.15s; flex-shrink: 0; }
+        .hamburger:hover { background: rgba(255,255,255,0.15); }
+        .logo-area { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+        .logo-icon { width: 28px; height: 28px; background: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-icon i { color: var(--blue); font-size: 14px; }
+        .logo-text { font-size: 20px; font-weight: 800; color: white; letter-spacing: 1px; white-space: nowrap; transition: opacity 0.2s; }
+        .sidebar.collapsed .logo-text { opacity: 0; }
+        .nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s, color 0.15s; color: var(--muted); font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; user-select: none; }
+        .nav-item i { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+        .nav-item span { transition: opacity 0.2s; }
+        .sidebar.collapsed .nav-item span { opacity: 0; }
+        .nav-item:hover { background: var(--blue-hover); color: var(--blue); }
+        .nav-item.active { background: var(--blue-light); color: var(--blue); }
+        .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .school-logo { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; transition: opacity 0.2s; }
+        .sidebar.collapsed .school-logo { opacity: 0; }
+        .school-logo-circle { width: 46px; height: 46px; border: 2px solid var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .school-logo-circle i { color: var(--blue); font-size: 18px; }
+        .school-name { font-size: 9px; color: var(--muted); font-weight: 700; line-height: 1.3; max-width: 140px; }
+
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { background: var(--blue); height: 52px; display: flex; align-items: center; justify-content: flex-end; padding: 0 20px; flex-shrink: 0; }
+        .avatar-btn { width: 36px; height: 36px; background: var(--green); border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: border-color 0.15s; }
+        .avatar-btn:hover { border-color: white; }
+
+        .dropdown { position: absolute; top: 52px; right: 16px; background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.14); min-width: 190px; padding: 8px; z-index: 100; display: none; animation: fadeIn 0.15s ease; }
+        .dropdown.open { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+        .dropdown-avatar { width: 30px; height: 30px; background: var(--green); border-radius: 50%; color: white; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .dropdown-name { font-size: 13px; font-weight: 700; color: var(--text); }
+        .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text); transition: background 0.12s; }
+        .dropdown-item:hover { background: var(--blue-hover); color: var(--blue); }
+        .dropdown-item.danger { color: #dc2626; }
+        .dropdown-item.danger:hover { background: #fef2f2; }
+        .dropdown-item i { width: 16px; text-align: center; font-size: 13px; }
+
+        .content { flex: 1; overflow-y: auto; padding: 28px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* Horario styles */
+        .schedule-container {
+            display: grid;
+            grid-template-columns: 80px repeat(5, 1fr);
+            border: 1px solid #ddd;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-header {
+            background: #f8f9fa;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 2px solid #dee2e6;
+            border-right: 1px solid #ddd;
+        }
+
+        .time-labels-container {
+            grid-column: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .time-slot-label {
+            height: 60px;
+            border-bottom: 1px solid #eee;
+            border-right: 1px solid #ddd;
+            padding: 5px;
+            font-size: 0.8rem;
+            text-align: center;
+            background: #fdfdfd;
+        }
+
+        .day-column {
+            position: relative;
+            height: 840px;
+            border-right: 1px solid #eee;
+            background-image: linear-gradient(#eee 1px, transparent 1px);
+            background-size: 100% 60px;
+        }
+
+        .aula-block {
+            position: absolute;
+            left: 5%;
+            width: 90%;
+            background: #0d6efd;
+            color: white;
+            border-radius: 4px;
+            padding: 6px;
+            font-size: 0.8rem;
+            overflow: hidden;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .color-0 { background: linear-gradient(135deg, #4f46e5, #6d64f5); color: white; }
+        .color-1 { background: linear-gradient(135deg, #059669, #10b981); color: white; }
+        .color-2 { background: linear-gradient(135deg, #d97706, #f59e0b); color: white; }
+        .color-3 { background: linear-gradient(135deg, #dc2626, #ef4444); color: white; }
+        .color-4 { background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: white; }
+        .color-5 { background: linear-gradient(135deg, #0891b2, #06b6d4); color: white; }
+        .color-6 { background: linear-gradient(135deg, #be185d, #ec4899); color: white; }
+        .color-7 { background: linear-gradient(135deg, #065f46, #34d399); color: white; }
+        .aula-block:hover { transform: scale(1.02); z-index: 20; }
+        .aula-header { display: flex; justify-content: space-between; align-items: flex-start; line-height: 1.2; }
+        .aula-datas { font-size: 0.65rem; text-align: right; opacity: 0.9; }
+        .badge-turma { font-size: 0.7rem; background: rgba(255,255,255,0.2); padding: 2px 4px; border-radius: 3px; }
+
+        .alert-info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+
+        @media (max-width: 900px) {
+            .content { padding: 16px; }
+            .sidebar { display:none; }
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="logo-area">
+      <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+      <span class="logo-text">GOP</span>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" id="nav-inicio" onclick="showPage('horario')">
+      <i class="fas fa-home"></i><span>Horário</span>
+    </div>
+    <div class="nav-item" id="nav-perfil" onclick="showPage('perfil')">
+      <i class="fas fa-user"></i><span>Perfil</span>
+    </div>
+    <div class="nav-item" id="nav-agenda" onclick="showPage('agenda')">
+      <i class="fas fa-calendar"></i><span>Agenda</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='admin.html'">
+      <i class="fas fa-user-shield"></i><span>Admin</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="school-logo">
+      <div class="school-logo-circle"><i class="fas fa-school"></i></div>
+      <div class="school-name">Escola Profissional<br>Bento de Jesus Caraça</div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div style="position:relative;">
+      <div class="avatar-btn" id="avatar-btn" onclick="toggleDropdown()"></div>
+      <div class="dropdown" id="dropdown">
+        <div class="dropdown-header">
+          <div class="dropdown-avatar" id="dropdown-avatar"></div>
+          <span class="dropdown-name" id="dropdown-name">Nome do Professor</span>
+        </div>
+        <div class="dropdown-item danger" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Sair
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="page active" id="page-horario">
+      <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Professor: <span id="nome-prof" class="text-primary"></span></h2>
+        </div>
+
+        <div id="infoAlert" class="alert alert-info" style="display:none;">
+          <i class="fas fa-info-circle"></i> 
+          <strong>Nota:</strong> O seu horário é gerido pelo administrador. As aulas abaixo foram atribuídas pelo admin.
+        </div>
+
+        <div class="schedule-container" id="schedule"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function showPage(page) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${page}`).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(`nav-${page}`).classList.add('active');
+    }
+
+    function toggleDropdown() {
+        document.getElementById('dropdown').classList.toggle('open');
+    }
+
+    window.addEventListener('click', (e) => {
+        if (!e.target.closest('.avatar-btn') && !e.target.closest('.dropdown')) {
+            document.getElementById('dropdown').classList.remove('open');
+        }
+    });
+
+    // Inicialização
+    window.addEventListener('DOMContentLoaded', async () => {
+        const profId = localStorage.getItem('professor_id');
+        const profNome = localStorage.getItem('professor_nome');
+
+        if (!profId || profId === "undefined") {
+            alert("Sessão expirada. Faz login de novo!");
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Preencher dados do professor
+        document.getElementById('nome-prof').innerText = profNome || 'Professor';
+        document.getElementById('dropdown-name').innerText = profNome || 'Professor';
+        const initials = (profNome || 'P').split(' ').map(n => n[0]).join('').toUpperCase();
+        document.getElementById('avatar-btn').innerText = initials;
+        document.getElementById('dropdown-avatar').innerText = initials;
+
+        // Carregar e exibir horário
+        await carregarHorario(profId);
+    });
+
+    async function carregarHorario(profId) {
+        try {
+            const res = await fetch(`http://localhost:3000/meu-horario/${profId}`);
+            const aulas = await res.json();
+
+            if (!Array.isArray(aulas)) {
+                console.error("Resposta inválida:", aulas);
+                return;
+            }
+
+            // Mostrar alerta se houver aulas
+            if (aulas.length > 0) {
+                document.getElementById('infoAlert').style.display = 'block';
+            }
+
+            // Criar grid do horário
+            criarGrid(aulas);
+        } catch (e) {
+            console.error("Erro ao carregar horário:", e);
+        }
+    }
+
+    function criarGrid(aulas) {
+        const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+        const horas = Array.from({length: 14}, (_, i) => `${8 + i}:00`);
+
+        let html = `
+            <div class="grid-header"></div>
+            ${dias.map(dia => `<div class="grid-header">${dia}</div>`).join('')}
+        `;
+
+        html += `<div class="time-labels-container">
+            ${horas.map(h => `<div class="time-slot-label">${h}</div>`).join('')}
+        </div>`;
+
+        dias.forEach(dia => {
+            html += `<div class="day-column" id="col-${dia}"></div>`;
+        });
+
+        document.getElementById('schedule').innerHTML = html;
+
+        // Adicionar aulas ao grid
+        aulas.forEach((aula, idx) => {
+            const col = document.getElementById(`col-${aula.dia_semana}`);
+            if (!col) return;
+
+            const [horaIni] = aula.hora_inicio.split(':');
+            const [horaFim] = aula.hora_fim.split(':');
+            const topPx = (parseInt(horaIni) - 8) * 60;
+            const heightPx = (parseInt(horaFim) - parseInt(horaIni)) * 60;
+
+            const div = document.createElement('div');
+            div.className = `aula-block color-${idx % 8}`;
+            div.style.top = `${topPx}px`;
+            div.style.height = `${heightPx}px`;
+
+            div.innerHTML = `
+                <div class="aula-header">
+                    <div><strong>${aula.nome_disciplina}</strong> <div class="badge-turma">${aula.turma || ''}</div></div>
+                    <div class="aula-datas">${aula.hora_inicio} - ${aula.hora_fim}<br><small>${aula.sala || ''}</small></div>
+                </div>
+            `;
+
+            col.appendChild(div);
+        });
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+</script>
+</body>
+</html>
