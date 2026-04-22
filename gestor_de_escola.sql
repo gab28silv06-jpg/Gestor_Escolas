@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 17-Abr-2026 às 12:30
+-- Tempo de geração: 23-Abr-2026 às 00:19
 -- Versão do servidor: 10.4.32-MariaDB
 -- versão do PHP: 8.2.12
 
@@ -54,12 +54,8 @@ CREATE TABLE `atribuicoes` (
 --
 
 INSERT INTO `atribuicoes` (`id_atribuicao`, `id_professor`, `id_disciplina`, `id_turma`, `id_horario`, `sala`, `descricao`) VALUES
-(3, 2, 2, 1, 9, '4', 'Módulo 13'),
-(4, 4, 1, 1, 10, '4', ''),
-(6, 4, 36, 3, 12, '5', ''),
-(7, 2, 3, 10, 13, '10', ''),
-(8, 2, 1, 4, 14, '10', ''),
-(9, 4, 36, 14, 15, '2', '');
+(5, 2, 1, 5, 5, '1', NULL),
+(6, 3, 6, 2, 6, '6', NULL);
 
 -- --------------------------------------------------------
 
@@ -70,50 +66,23 @@ INSERT INTO `atribuicoes` (`id_atribuicao`, `id_professor`, `id_disciplina`, `id
 CREATE TABLE `disciplinas` (
   `id_disciplina` int(11) NOT NULL,
   `nome_disciplina` varchar(100) DEFAULT NULL,
-  `id_professor` int(11) DEFAULT NULL,
-  `descricao` text DEFAULT NULL,
-  `turma` varchar(50) DEFAULT NULL,
-  `dia_semana` varchar(20) DEFAULT NULL,
-  `hora_inicio` time DEFAULT NULL,
-  `hora_fim` time DEFAULT NULL,
-  `sala` varchar(20) DEFAULT NULL
+  `descricao` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Extraindo dados da tabela `disciplinas`
 --
 
-INSERT INTO `disciplinas` (`id_disciplina`, `nome_disciplina`, `id_professor`, `descricao`, `turma`, `dia_semana`, `hora_inicio`, `hora_fim`, `sala`) VALUES
-(1, 'Arquitetura de Computadores', 2, '', '11º GPSI', 'Segunda', '10:45:00', '11:45:00', 'Sala 6'),
-(2, 'Redes de Comunicação', 2, '', '10º GPSI', 'Segunda', '08:30:00', '10:30:00', 'Sala 5'),
-(3, 'Programação de Sistemas Informáticos', 2, '', '10º GPSI', 'Segunda', '17:00:00', '18:00:00', 'Sala 6'),
-(36, 'Matemática', NULL, '', NULL, NULL, NULL, NULL, NULL);
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `disponibilidade`
---
-
-CREATE TABLE `disponibilidade` (
-  `id_disponibilidade` int(11) NOT NULL,
-  `id_professor` int(11) DEFAULT NULL,
-  `dia_semana` varchar(20) DEFAULT NULL,
-  `hora_inicio` time DEFAULT NULL,
-  `hora_fim` time DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Extraindo dados da tabela `disponibilidade`
---
-
-INSERT INTO `disponibilidade` (`id_disponibilidade`, `id_professor`, `dia_semana`, `hora_inicio`, `hora_fim`) VALUES
-(2, 2, 'Segunda', '08:00:00', '09:00:00'),
-(3, 2, 'Segunda', '11:00:00', '12:00:00'),
-(4, 2, 'Segunda', '09:00:00', '10:00:00'),
-(5, 2, 'Segunda', '10:00:00', '11:00:00'),
-(6, 2, 'Quinta', '14:00:00', '15:00:00'),
-(8, 2, 'Quinta', '12:00:00', '13:00:00');
+INSERT INTO `disciplinas` (`id_disciplina`, `nome_disciplina`, `descricao`) VALUES
+(1, 'Matemática', NULL),
+(2, 'Inglês', ''),
+(3, 'Física-Química', ''),
+(4, 'Arquitetura de Computadores', ''),
+(5, 'Sistemas Operativos', ''),
+(6, 'Redes de Comunicação', ''),
+(7, 'Programação de Sistemas Informáticos', ''),
+(8, 'Português', ''),
+(9, 'Área de Intergração', '');
 
 -- --------------------------------------------------------
 
@@ -133,18 +102,9 @@ CREATE TABLE `horarios` (
 --
 
 INSERT INTO `horarios` (`id_horario`, `dia_semana`, `hora_inicio`, `hora_fim`) VALUES
-(1, 'Segunda', '08:00:00', '17:00:00'),
-(4, 'Segunda', '10:00:00', '11:00:00'),
-(5, 'Segunda', '11:00:00', '12:00:00'),
-(6, 'Quinta', '14:00:00', '15:00:00'),
-(7, 'Quinta', '12:00:00', '13:00:00'),
-(8, 'Quinta', '13:00:00', '14:00:00'),
-(9, 'Segunda', '08:30:00', '09:30:00'),
-(10, 'Segunda', '09:30:00', '10:30:00'),
-(12, 'Terça', '09:30:00', '10:45:00'),
-(13, 'Quinta', '10:00:00', '11:00:00'),
-(14, 'Sexta', '09:00:00', '10:00:00'),
-(15, 'Quarta', '15:00:00', '15:50:00');
+(1, 'Terça', '09:00:00', '10:00:00'),
+(5, 'Segunda', '08:30:00', '13:00:00'),
+(6, 'Quarta', '08:30:00', '10:45:00');
 
 -- --------------------------------------------------------
 
@@ -156,16 +116,19 @@ CREATE TABLE `professores` (
   `id_professor` int(11) NOT NULL,
   `nome` varchar(100) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
-  `disciplinas_permitidas` text DEFAULT NULL
+  `disciplinas_permitidas` text DEFAULT NULL,
+  `turmas_atribuidas` text DEFAULT NULL,
+  `is_admin` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Extraindo dados da tabela `professores`
 --
 
-INSERT INTO `professores` (`id_professor`, `nome`, `email`, `disciplinas_permitidas`) VALUES
-(2, 'professor', 'prof@gmail.com', 'Arquitetura de Computadores, Redes de Comunicação, Programação de Sistemas Informáticos'),
-(4, 'professor 2', 'profprof@gmail.com', 'Matemática');
+INSERT INTO `professores` (`id_professor`, `nome`, `email`, `disciplinas_permitidas`, `turmas_atribuidas`, `is_admin`) VALUES
+(1, 'Diretor', 'admin@escola.pt', NULL, NULL, 1),
+(2, 'Professor Teste', 'prof@gmail.com', 'Matemática, Física-Química', NULL, 0),
+(3, 'Professor Teste2', 'prof2@gmail.com', 'Arquitetura de Computadores, Sistemas Operativos, Redes de Comunicação, Programação de Sistemas Informáticos', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -184,18 +147,18 @@ CREATE TABLE `turmas` (
 --
 
 INSERT INTO `turmas` (`id_turma`, `ano`, `curso`) VALUES
-(1, '10º', 'GPSI'),
+(2, '10º', 'GPSI'),
 (3, '11º', 'GPSI'),
 (4, '12º', 'GPSI'),
 (5, '10º', 'IG'),
 (6, '11º', 'IG'),
 (7, '12º', 'IG'),
-(9, '10º', 'ASC'),
-(10, '11º', 'ASC'),
-(11, '12º', 'ASC'),
-(12, '10º', 'C&M'),
-(13, '11º', 'C&M'),
-(14, '12º', 'C&M');
+(8, '10º', 'ASC'),
+(9, '11º', 'ASC'),
+(10, '12º', 'ASC'),
+(11, '10º', 'C&M'),
+(12, '11º', 'C&M'),
+(13, '12º', 'C&M');
 
 --
 -- Índices para tabelas despejadas
@@ -212,24 +175,16 @@ ALTER TABLE `alunos`
 --
 ALTER TABLE `atribuicoes`
   ADD PRIMARY KEY (`id_atribuicao`),
-  ADD KEY `id_professor` (`id_professor`),
-  ADD KEY `id_disciplina` (`id_disciplina`),
-  ADD KEY `id_turma` (`id_turma`),
-  ADD KEY `id_horario` (`id_horario`);
+  ADD KEY `fk_prof` (`id_professor`),
+  ADD KEY `fk_disc` (`id_disciplina`),
+  ADD KEY `fk_turma` (`id_turma`),
+  ADD KEY `fk_horario` (`id_horario`);
 
 --
 -- Índices para tabela `disciplinas`
 --
 ALTER TABLE `disciplinas`
-  ADD PRIMARY KEY (`id_disciplina`),
-  ADD KEY `id_professor` (`id_professor`);
-
---
--- Índices para tabela `disponibilidade`
---
-ALTER TABLE `disponibilidade`
-  ADD PRIMARY KEY (`id_disponibilidade`),
-  ADD KEY `id_professor` (`id_professor`);
+  ADD PRIMARY KEY (`id_disciplina`);
 
 --
 -- Índices para tabela `horarios`
@@ -241,7 +196,8 @@ ALTER TABLE `horarios`
 -- Índices para tabela `professores`
 --
 ALTER TABLE `professores`
-  ADD PRIMARY KEY (`id_professor`);
+  ADD PRIMARY KEY (`id_professor`),
+  ADD UNIQUE KEY `email_unique` (`email`);
 
 --
 -- Índices para tabela `turmas`
@@ -263,37 +219,31 @@ ALTER TABLE `alunos`
 -- AUTO_INCREMENT de tabela `atribuicoes`
 --
 ALTER TABLE `atribuicoes`
-  MODIFY `id_atribuicao` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_atribuicao` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `disciplinas`
 --
 ALTER TABLE `disciplinas`
-  MODIFY `id_disciplina` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
-
---
--- AUTO_INCREMENT de tabela `disponibilidade`
---
-ALTER TABLE `disponibilidade`
-  MODIFY `id_disponibilidade` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_disciplina` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de tabela `horarios`
 --
 ALTER TABLE `horarios`
-  MODIFY `id_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `professores`
 --
 ALTER TABLE `professores`
-  MODIFY `id_professor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_professor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
-  MODIFY `id_turma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id_turma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- Restrições para despejos de tabelas
@@ -303,23 +253,10 @@ ALTER TABLE `turmas`
 -- Limitadores para a tabela `atribuicoes`
 --
 ALTER TABLE `atribuicoes`
-  ADD CONSTRAINT `atribuicoes_ibfk_1` FOREIGN KEY (`id_professor`) REFERENCES `professores` (`id_professor`),
-  ADD CONSTRAINT `atribuicoes_ibfk_2` FOREIGN KEY (`id_disciplina`) REFERENCES `disciplinas` (`id_disciplina`),
-  ADD CONSTRAINT `atribuicoes_ibfk_3` FOREIGN KEY (`id_turma`) REFERENCES `turmas` (`id_turma`),
-  ADD CONSTRAINT `atribuicoes_ibfk_4` FOREIGN KEY (`id_horario`) REFERENCES `horarios` (`id_horario`);
-
---
--- Limitadores para a tabela `disciplinas`
---
-ALTER TABLE `disciplinas`
-  ADD CONSTRAINT `disciplinas_ibfk_1` FOREIGN KEY (`id_professor`) REFERENCES `professores` (`id_professor`),
-  ADD CONSTRAINT `disciplinas_ibfk_2` FOREIGN KEY (`id_professor`) REFERENCES `professores` (`id_professor`);
-
---
--- Limitadores para a tabela `disponibilidade`
---
-ALTER TABLE `disponibilidade`
-  ADD CONSTRAINT `disponibilidade_ibfk_1` FOREIGN KEY (`id_professor`) REFERENCES `professores` (`id_professor`);
+  ADD CONSTRAINT `fk_atrib_disc` FOREIGN KEY (`id_disciplina`) REFERENCES `disciplinas` (`id_disciplina`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_atrib_horario` FOREIGN KEY (`id_horario`) REFERENCES `horarios` (`id_horario`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_atrib_prof` FOREIGN KEY (`id_professor`) REFERENCES `professores` (`id_professor`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_atrib_turma` FOREIGN KEY (`id_turma`) REFERENCES `turmas` (`id_turma`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
