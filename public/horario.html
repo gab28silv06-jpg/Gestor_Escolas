@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Meu Horário — Gestão Escolar</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2B7FD4; --blue-dark: #1a5fa8; --blue-light: #ddeeff;
+      --blue-hover: #e8f2fc; --green: #2d7a4f; --sidebar-w: 220px;
+      --sidebar-w-collapsed: 60px; --text: #1a1a2e; --muted: #6b7280;
+      --border: #e5e7eb; --bg: #f4f6fb; --white: #ffffff;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+    .sidebar { width: var(--sidebar-w); background: var(--white); display: flex; flex-direction: column; border-right: 1px solid var(--border); transition: width 0.25s ease; overflow: hidden; flex-shrink: 0; box-shadow: 2px 0 8px rgba(0,0,0,0.04); z-index: 10; }
+    .sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+    .sidebar-header { background: var(--blue); padding: 0 14px; height: 52px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .hamburger { background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: background 0.15s; flex-shrink: 0; }
+    .hamburger:hover { background: rgba(255,255,255,0.15); }
+    .logo-area { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+    .logo-icon { width: 28px; height: 28px; background: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .logo-icon i { color: var(--blue); font-size: 14px; }
+    .logo-text { font-size: 20px; font-weight: 800; color: white; letter-spacing: 1px; white-space: nowrap; transition: opacity 0.2s; }
+    .sidebar.collapsed .logo-text { opacity: 0; }
+    .nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s, color 0.15s; color: var(--muted); font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; user-select: none; }
+    .nav-item i { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-item span { transition: opacity 0.2s; }
+    .sidebar.collapsed .nav-item span { opacity: 0; }
+    .nav-item:hover { background: var(--blue-hover); color: var(--blue); }
+    .nav-item.active { background: var(--blue-light); color: var(--blue); }
+    .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .school-logo { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; transition: opacity 0.2s; }
+    .sidebar.collapsed .school-logo { opacity: 0; }
+    .school-logo-circle { width: 46px; height: 46px; border: 2px solid var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .school-logo-circle i { color: var(--blue); font-size: 18px; }
+    .school-name { font-size: 9px; color: var(--muted); font-weight: 700; line-height: 1.3; max-width: 140px; }
+
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar { background: var(--blue); height: 52px; display: flex; align-items: center; justify-content: flex-end; padding: 0 20px; flex-shrink: 0; }
+    .avatar-btn { width: 36px; height: 36px; background: var(--green); border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: border-color 0.15s; }
+    .avatar-btn:hover { border-color: white; }
+
+    .dropdown { position: absolute; top: 52px; right: 16px; background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.14); min-width: 190px; padding: 8px; z-index: 100; display: none; animation: fadeIn 0.15s ease; }
+    .dropdown.open { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .dropdown-header { display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+    .dropdown-avatar { width: 30px; height: 30px; background: var(--green); border-radius: 50%; color: white; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .dropdown-name { font-size: 13px; font-weight: 700; color: var(--text); }
+    .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text); transition: background 0.12s; }
+    .dropdown-item:hover { background: var(--blue-hover); color: var(--blue); }
+    .dropdown-item.danger { color: #dc2626; }
+    .dropdown-item.danger:hover { background: #fef2f2; }
+    .dropdown-item i { width: 16px; text-align: center; font-size: 13px; }
+
+    .content { flex: 1; overflow-y: auto; padding: 28px; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .schedule-card { background: white; border-radius: 16px; box-shadow: var(--shadow); padding: 24px 28px; max-width: 100%; }
+    .schedule-title { font-size: 20px; font-weight: 800; color: var(--blue); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .today-date { font-size: 11px; color: var(--muted); font-weight: 600; margin-left: auto; text-transform: none; letter-spacing: 0; }
+
+    .schedule-container {
+      display: grid;
+      grid-template-columns: 80px repeat(5, 1fr);
+      border: 1px solid #ddd;
+      background-color: #fff;
+      position: relative;
+      overflow: hidden;
+      margin-top: 20px;
+      border-radius: 8px;
+    }
+    .grid-header {
+      background: #f8f9fa;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px 0;
+      border-bottom: 2px solid #dee2e6;
+      border-right: 1px solid #ddd;
+    }
+    .time-labels-container {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .time-slot-label {
+      border-bottom: 1px solid #eee;
+      border-right: 1px solid #ddd;
+      padding: 5px;
+      font-size: 0.8rem;
+      background: #fdfdfd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .day-column {
+      position: relative;
+      border-right: 1px solid #eee;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 29px,
+        #d1d5db 29px,
+        #d1d5db 30px
+      );
+    }
+    .aula-block {
+      position: absolute;
+      left: 5%;
+      width: 90%;
+      background: #0d6efd;
+      color: white;
+      border-radius: 4px;
+      padding: 6px;
+      font-size: 0.8rem;
+      overflow: hidden;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .intervalo-block {
+      position: absolute;
+      left: 0%;
+      width: 100%;
+
+      background-color: #e5e7eb;
+
+      /* LINHAS DIAGONAIS SIMPLES */
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(0, 0, 0, 0.15) 0px,
+        rgba(0, 0, 0, 0.15) 6px,
+        transparent 6px,
+        transparent 12px
+      );
+
+      z-index: 15;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .color-0 { background: linear-gradient(135deg, #4f46e5, #6d64f5); }
+    .color-1 { background: linear-gradient(135deg, #059669, #10b981); }
+    .color-2 { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .color-3 { background: linear-gradient(135deg, #dc2626, #ef4444); }
+    .color-4 { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+    .color-5 { background: linear-gradient(135deg, #0891b2, #06b6d4); }
+    .color-6 { background: linear-gradient(135deg, #be185d, #ec4899); }
+    .color-7 { background: linear-gradient(135deg, #065f46, #34d399); }
+    .aula-block:hover { transform: scale(1.02); z-index: 20; }
+    .aula-block.passed { filter: brightness(0.6); opacity: 0.8; }
+    .aula-header { z-index: 16; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; line-height: 1.2; font-size: 0.8rem; }
+    .aula-disciplina { font-size: 1rem; font-weight: bold; }
+    .aula-turma { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px; font-size: 0.65rem; white-space: nowrap; }
+    .aula-info-direita { display: flex; flex-direction: column; gap: 2px; text-align: right; }
+    .aula-horario { font-size: 0.65rem; opacity: 0.9; line-height: 1; }
+    .aula-sala { font-size: 0.65rem; opacity: 0.9; line-height: 1; }
+    .aulas-lista { display: flex; flex-direction: column; gap: 10px; }
+    .aula-item { display: flex; align-items: center; gap: 10px; padding: 12px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #2B7FD4; transition: background 0.2s, opacity 0.2s; }
+    .aula-item.passed { background: #d5d5d8; opacity: 1; }
+    .aula-info { flex: 1; }
+    .aula-info strong { font-size: 0.9rem; color: var(--text); }
+    .aula-info small { font-size: 0.8rem; color: var(--muted); }
+    .schedule-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; color: var(--muted); }
+    .schedule-placeholder i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+  </style>
+  <script>
+    let currentUser = null;
+    let aulas = [];
+
+    const INTERVALOS = [
+        { inicio: "09:20", fim: "09:30" },
+        { inicio: "10:30", fim: "10:45" },
+        { inicio: "11:40", fim: "11:45" },
+        { inicio: "12:45", fim: "14:00" },
+        { inicio: "14:00", fim: "15:00" }, // Almoço/Pausa
+        { inicio: "15:55", fim: "16:10" }
+    ];
+
+    const PIXELS_PER_MINUTE = 2;
+
+    function tempoEmMinutos(tempo) {
+        const [h, m] = tempo.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    function calcularAltura(inicio, fim) {
+        return (tempoEmMinutos(fim) - tempoEmMinutos(inicio)) * PIXELS_PER_MINUTE;
+    }
+
+    function calcularTop(inicio) {
+        return (tempoEmMinutos(inicio) - tempoEmMinutos("08:00")) * PIXELS_PER_MINUTE;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) { window.location.href = 'login.html'; return; }
+      currentUser = JSON.parse(userStr);
+      
+      // Atualizar elementos se existirem
+      const elements = {
+        'userAvatar': currentUser.nome.charAt(0).toUpperCase(),
+        'dropdownAvatar': currentUser.nome.charAt(0).toUpperCase(),
+        'dropdownName': currentUser.nome
+      };
+      
+      for (const [id, value] of Object.entries(elements)) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+      }
+      
+      carregarHorario();
+    });
+
+    async function carregarHorario() {
+      try {
+        const res = await fetch(`/meu-horario/${currentUser.id}`);
+        aulas = await res.json();
+        if (aulas.length > 0) atualizarInicio();
+      } catch (err) { console.error(err); }
+    }
+
+    function atualizarInicio() {
+      const hoje = new Date().getDay();
+      if (hoje === 0 || hoje === 6) {
+        document.getElementById('schedule-hoje').innerHTML = '<div class="schedule-placeholder"><i class="fas fa-calendar-plus"></i><p>É fim de semana. Sem aulas hoje.</p></div>';
+        return;
+      }
+      const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+      const diaHoje = diasSemana[hoje];
+      const aulasHoje = aulas.filter(a => a.dia_semana === diaHoje);
+      if (aulasHoje.length === 0) {
+        document.getElementById('schedule-hoje').innerHTML = '<div class="schedule-placeholder"><i class="fas fa-calendar-plus"></i><p>Sem aulas agendadas para hoje.</p></div>';
+        return;
+      }
+      criarGridHoje(aulasHoje);
+    }
+
+    function criarGridHoje(aulasHoje) {
+      const agora = new Date();
+      const horaAtualMin = agora.getHours() * 60 + agora.getMinutes();
+
+      let html = `<div class="aulas-lista">`;
+      aulasHoje.forEach((aula, idx) => {
+        const fimMin = tempoEmMinutos(aula.hora_fim);
+        const passed = fimMin <= horaAtualMin ? 'passed' : '';
+        const formatarHora = (hora) => hora ? hora.substring(0, 5) : '';
+        html += `
+          <div class="aula-item ${passed}">
+            <div class="aula-info">
+              <strong>${aula.nome_disciplina}</strong> - ${aula.turma}<br>
+              <small>${formatarHora(aula.hora_inicio)} - ${formatarHora(aula.hora_fim)} | Sala: ${aula.sala}</small>
+            </div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+      document.getElementById('schedule-hoje').innerHTML = html;
+    }
+
+    function criarGridHorario(aulas) {
+      const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+      
+      // Criar array de horas com intervalos de 15 minutos
+      const horas = [];
+      for (let h = 8; h <= 17; h++) {
+        for (let m = 0; m < 60; m += 15) {
+          horas.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+        }
+      }
+      horas.push('18:00');
+
+      let html = `<div class="grid-header"></div>${dias.map(dia => `<div class="grid-header">${dia}</div>`).join('')}`;
+      html += `<div class="time-labels-container">${horas.map(h => `<div class="time-slot-label" style="height:${15 * PIXELS_PER_MINUTE}px">${h}</div>`).join('')}</div>`;
+      dias.forEach(dia => { html += `<div class="day-column" id="col-${dia}" style="height:${615 * PIXELS_PER_MINUTE}px"></div>`; });
+      document.getElementById('schedule').innerHTML = html;
+
+      aulas.forEach((aula, idx) => {
+        const col = document.getElementById(`col-${aula.dia_semana}`);
+        if (!col) return;
+
+        const div = document.createElement('div');
+        div.className = `aula-block color-${idx % 8}`;
+        div.style.top = `${calcularTop(aula.hora_inicio)}px`;
+        div.style.height = `${calcularAltura(aula.hora_inicio, aula.hora_fim)}px`;
+
+        const classStartMin = tempoEmMinutos(aula.hora_inicio);
+        const classEndMin = tempoEmMinutos(aula.hora_fim);
+
+        INTERVALOS.forEach(intervalo => {
+          const breakStartMin = tempoEmMinutos(intervalo.inicio);
+          const breakEndMin = tempoEmMinutos(intervalo.fim);
+
+          if (breakStartMin < classEndMin && breakEndMin > classStartMin) {
+            const breakTopInBlock = Math.max(0, breakStartMin - classStartMin) * PIXELS_PER_MINUTE;
+            const actualBreakEnd = Math.min(classEndMin, breakEndMin);
+            const actualBreakStart = Math.max(classStartMin, breakStartMin);
+            const breakHeight = (actualBreakEnd - actualBreakStart) * PIXELS_PER_MINUTE;
+
+            const breakDiv = document.createElement('div');
+            breakDiv.className = 'intervalo-block';
+            breakDiv.style.top = `${breakTopInBlock}px`;
+            breakDiv.style.height = `${breakHeight}px`;
+            div.appendChild(breakDiv);
+          }
+        });
+
+        const formatarHora = (hora) => hora ? hora.substring(0, 5) : '';
+        div.innerHTML += `
+          <div class="aula-header">
+            <div class="aula-disciplina">${aula.nome_disciplina}</div>
+            <div class="aula-turma">${aula.turma}</div>
+            <div class="aula-info-direita">
+              <div class="aula-horario">${formatarHora(aula.hora_inicio)} - ${formatarHora(aula.hora_fim)}</div>
+              <div class="aula-sala">${aula.sala}</div>
+            </div>
+          </div>
+        `;
+        col.appendChild(div);
+      });
+    }
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function toggleDropdown() { document.getElementById('dropdown').classList.toggle('open'); }
+    function logout() { localStorage.removeItem('user'); window.location.href = 'login.html'; }
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('nav-' + page).classList.add('active');
+      if (page === 'horario' && aulas.length > 0) criarGridHorario(aulas);
+    }
+  </script>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="logo-area"><div class="logo-icon"><i class="fas fa-graduation-cap"></i></div><span class="logo-text">GOP</span></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" id="nav-inicio" onclick="showPage('inicio')"><i class="fas fa-home"></i><span>Início</span></div>
+    <div class="nav-item" id="nav-horario" onclick="showPage('horario')"><i class="fas fa-calendar-alt"></i><span>Horário</span></div>
+  </nav>
+  <div class="sidebar-footer"><div class="school-logo"><div class="school-logo-circle"><i class="fas fa-school"></i></div><div class="school-name">Escola Profissional<br>Bento de Jesus Caraça</div></div></div>
+</aside>
+<div class="main">
+  <div class="topbar"><div style="position:relative;"><div class="avatar-btn" id="userAvatar" onclick="toggleDropdown()">?</div><div class="dropdown" id="dropdown"><div class="dropdown-header"><div class="dropdown-avatar" id="dropdownAvatar">?</div><span class="dropdown-name" id="dropdownName">Nome</span></div><div class="dropdown-item danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</div></div></div></div>
+  <div class="content">
+    <div class="page active" id="page-inicio">
+      <div class="schedule-card"><div class="schedule-title">Bem-vindo ao Portal do Professor</div><div id="schedule-hoje"></div></div>
+    </div>
+    <div class="page" id="page-horario">
+      <div class="schedule-card"><div class="schedule-title">Seu Horário Semanal</div><div id="schedule" class="schedule-container"></div></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

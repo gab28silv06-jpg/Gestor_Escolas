@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login — Gestão Escolar</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+      background: #f5f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .main-container {
+      display: flex;
+      width: 900px;
+      height: 520px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.10);
+      overflow: hidden;
+    }
+
+    /* Lado do formulário */
+    .form-side {
+      width: 50%;
+      padding: 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-box h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #1a1a2e;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 30px;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      background: #f0f4ff;
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      border: 2px solid transparent;
+      transition: 0.2s;
+    }
+
+    .input-group:focus-within {
+      border-color: #4f7df3;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(79,125,243,0.15);
+    }
+
+    .input-group i {
+      margin-right: 10px;
+      color: #4f7df3;
+      font-size: 1.1rem;
+    }
+
+    .input-group input {
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 100%;
+      font-size: 1rem;
+    }
+
+    .btn-main {
+      width: 100%;
+      padding: 14px;
+      background: #4f7df3;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 10px;
+    }
+
+    .btn-main:hover {
+      background: #3b66d1;
+      box-shadow: 0 10px 20px rgba(79,125,243,0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Lado da imagem */
+    .image-side {
+      width: 50%;
+      background: #e6ecff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .circle-bg {
+      width: 350px;
+      height: 350px;
+      background: #cdd9ff;
+      border-radius: 50%;
+      position: absolute;
+      z-index: 1;
+    }
+
+    .image-side img {
+      width: 300px;
+      z-index: 2;
+    }
+
+    /* Mensagens */
+    .alert {
+      margin-bottom: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .alert-danger {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+
+    .loading {
+      text-align: center;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .spinner-border {
+      width: 22px;
+      height: 22px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #4f7df3;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .info-box {
+      margin-top: 20px;
+      background: #e6ecff;
+      padding: 12px;
+      border-left: 4px solid #4f7df3;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+  </style>
+  <script>
+    function handleLogin(e) {
+      e.preventDefault();
+      
+      const nome = document.getElementById('nome').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const errorDiv = document.getElementById('errorMessage');
+      const loadingDiv = document.getElementById('loading');
+      
+      errorDiv.style.display = 'none';
+      loadingDiv.style.display = 'block';
+      
+      if (!nome || !email) {
+        errorDiv.innerHTML = '⚠️ Por favor, preencha todos os campos.';
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        return;
+      }
+      
+      fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          errorDiv.innerHTML = `⚠️ ${data.error}`;
+          errorDiv.style.display = 'block';
+          loadingDiv.style.display = 'none';
+        } else {
+          // Guardar dados do utilizador no localStorage
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
+          // Redirecionar baseado no tipo de utilizador
+          if (data.user.is_admin) {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'horario.html';
+          }
+        }
+      })
+      .catch(err => {
+        errorDiv.innerHTML = `❌ Erro de conexão: ${err.message}`;
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+      });
+    }
+    
+    window.addEventListener('DOMContentLoaded', () => {
+      // Se o utilizador já está autenticado, redirecionar
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (user) {
+        if (user.is_admin) {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'horario.html';
+        }
+      }
+    });
+  </script>
+</head>
+<body>
+
+  <div class="main-container">
+
+    <!-- FORMULÁRIO -->
+    <div class="form-side">
+      <div id="errorMessage" class="alert alert-danger"></div>
+
+      <form onsubmit="handleLogin(event)" class="form-box">
+        <h1>Login</h1>
+        <p class="subtitle">Acesse sua conta de Professor</p>
+
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" id="nome" placeholder="Nome Completo" required>
+        </div>
+
+        <div class="input-group">
+          <i class="fas fa-envelope"></i>
+          <input type="email" id="email" placeholder="Email Institucional" required>
+        </div>
+
+        <button class="btn-main" type="submit">Entrar</button>
+
+        <div id="loading" class="loading">
+          <div class="spinner-border" role="status"></div>
+          <p style="color:#6b7280; margin-top:8px;">Autenticando...</p>
+        </div>
+
+        <div class="info-box">
+          <strong>Dados de Teste (Diretor):</strong><br>
+          Nome: <code>Diretor</code><br>
+          Email: <code>admin@escola.pt</code>
+        </div>
+      </form>
+    </div>
+
+    <!-- ILUSTRAÇÃO -->
+    <div class="image-side">
+      <div class="circle-bg"></div>
+      <img src="https://illustrations.popsy.co/blue/studying.svg" alt="Ilustração">
+    </div>
+
+  </div>
+
+</body>
+</html>
