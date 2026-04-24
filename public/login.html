@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login — Gestão Escolar</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+    }
+    .login-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .login-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+    .login-header p {
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #1a1a2e;
+      font-size: 0.95rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      margin-top: 10px;
+    }
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+    .btn-login:active {
+      transform: translateY(0);
+    }
+    .alert {
+      margin-bottom: 20px;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.9rem;
+    }
+    .alert-danger {
+      background-color: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+    }
+    .spinner-border {
+      width: 20px;
+      height: 20px;
+      border-width: 2px;
+    }
+    .info-box {
+      background-color: #f3f4f6;
+      border-left: 4px solid #667eea;
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #374151;
+    }
+    .info-box strong {
+      color: #1a1a2e;
+    }
+  </style>
+  <script>
+    function handleLogin(e) {
+      e.preventDefault();
+      
+      const nome = document.getElementById('nome').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const errorDiv = document.getElementById('errorMessage');
+      const loadingDiv = document.getElementById('loading');
+      
+      errorDiv.style.display = 'none';
+      loadingDiv.style.display = 'block';
+      
+      if (!nome || !email) {
+        errorDiv.innerHTML = '⚠️ Por favor, preencha todos os campos.';
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        return;
+      }
+      
+      fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          errorDiv.innerHTML = `⚠️ ${data.error}`;
+          errorDiv.style.display = 'block';
+          loadingDiv.style.display = 'none';
+        } else {
+          // Guardar dados do utilizador no localStorage
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
+          // Redirecionar baseado no tipo de utilizador
+          if (data.user.is_admin) {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'horario.html';
+          }
+        }
+      })
+      .catch(err => {
+        errorDiv.innerHTML = `❌ Erro de conexão: ${err.message}`;
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+      });
+    }
+    
+    window.addEventListener('DOMContentLoaded', () => {
+      // Se o utilizador já está autenticado, redirecionar
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (user) {
+        if (user.is_admin) {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'horario.html';
+        }
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <h1>🎓 Gestão Escolar</h1>
+      <p>Plataforma de Horários e Administração</p>
+    </div>
+    
+    <div id="errorMessage" class="alert alert-danger" style="display:none;"></div>
+    
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="nome">Nome Completo</label>
+        <input type="text" id="nome" placeholder="Ex: João Silva" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Email Institucional</label>
+        <input type="email" id="email" placeholder="Ex: joao@escola.pt" required>
+      </div>
+      
+      <button type="submit" class="btn-login">Entrar</button>
+      
+      <div id="loading" class="loading">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p style="margin-top: 10px; color: #6b7280; font-size: 0.9rem;">Autenticando...</p>
+      </div>
+    </form>
+    
+    <div class="info-box">
+      <strong>Dados de Teste (Diretor):</strong><br>
+      Nome: <code>Diretor</code><br>
+      Email: <code>admin@escola.pt</code>
+    </div>
+  </div>
+</body>
+</html>

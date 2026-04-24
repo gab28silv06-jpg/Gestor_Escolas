@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gestão Escolar — Administrativo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style> 
+    body { background:#f4f6fb; color:#1a1a2e; font-family:system-ui, -apple-system, 'Segoe UI', Roboto, Arial; }
+    .container { max-width:1800px; }
+    .navbar-custom {
+      background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 12px 0;
+    }
+    .navbar-brand { color: white !important; font-weight: 700; font-size: 1.3rem; }
+    .user-info {
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .user-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .btn-logout {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover {
+      background: rgba(255,255,255,0.3);
+      color: white;
+      text-decoration: none;
+    }
+    .page-header {
+      background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+      border-radius: 14px;
+      color: #fff;
+      box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+      padding: 18px 20px;
+      margin-bottom: 22px;
+      border:1px solid rgba(255,255,255,0.2);
+    }
+    .page-header h3 { margin:0; font-size:1.7rem; font-weight:700; }
+    .card {
+      border-radius: 12px;
+      border: 1px solid rgba(111, 118, 190, 0.2);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14); }
+    .small-muted { color:#6b7280; font-size:0.9rem; }
+    .table-wrap { max-height:540px; overflow:auto; }
+    .disciplinas-container { max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; }
+    .form-check { margin-bottom: 8px; }
+    .alert-conflict { background-color: #fff3cd; border-color: #ffc107; color: #856404; }
+    .alert-info-disc { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+    
+    /* Estilos para o visualizador de horários com intervalos */
+    .schedule-container {
+      display: grid;
+      grid-template-columns: 80px repeat(5, 1fr);
+      border: 1px solid #ddd;
+      background-color: #fff;
+      position: relative;
+      overflow: hidden;
+      margin-top: 20px;
+      border-radius: 8px;
+    }
+    .grid-header {
+      background: #f8f9fa;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px 0;
+      border-bottom: 2px solid #dee2e6;
+      border-right: 1px solid #ddd;
+    }
+    .time-labels-container {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .time-slot-label {
+      height: 60px;
+      border-bottom: 1px solid #eee;
+      border-right: 1px solid #ddd;
+      padding: 5px;
+      font-size: 0.8rem;
+      text-align: center;
+      background: #fdfdfd;
+    }
+    .day-column {
+      position: relative;
+      border-right: 1px solid #eee;
+      background-image: linear-gradient(#eee 1px, transparent 1px);
+    }
+    .aula-block {
+      position: absolute;
+      left: 5%;
+      width: 90%;
+      background: #0d6efd;
+      color: white;
+      border-radius: 4px;
+      padding: 6px;
+      font-size: 0.8rem;
+      overflow: hidden;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .intervalo-block {
+      position: absolute;
+      left: 0%;
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.497);
+      background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 8px,
+        rgba(0,0,0,0.1) 8px,
+        rgba(0,0,0,0.1) 16px
+      );
+      border-radius: 2px;
+      z-index: 15;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+    .color-0 { background: linear-gradient(135deg, #4f46e5, #6d64f5); }
+    .color-1 { background: linear-gradient(135deg, #059669, #10b981); }
+    .color-2 { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .color-3 { background: linear-gradient(135deg, #dc2626, #ef4444); }
+    .color-4 { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+    .color-5 { background: linear-gradient(135deg, #0891b2, #06b6d4); }
+    .color-6 { background: linear-gradient(135deg, #be185d, #ec4899); }
+    .color-7 { background: linear-gradient(135deg, #065f46, #34d399); }
+    .aula-block:hover { transform: scale(1.02); z-index: 20; }
+    .aula-header { z-index: 16; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.261); display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; line-height: 1.2; font-size: 0.8rem; }
+    .aula-disciplina { font-weight: bold; }
+    .aula-turma { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px; font-size: 0.65rem; white-space: nowrap; }
+    .aula-info-direita { display: flex; flex-direction: column; gap: 2px; text-align: right; }
+    .aula-horario { font-size: 0.65rem; opacity: 0.9; line-height: 1; }
+    .aula-sala { font-size: 0.65rem; opacity: 0.9; line-height: 1; }
+  </style>
+  <script>
+    // Configuração de Intervalos
+    const PERIODOS_AULAS = [
+    { inicio: "08:30", fim: "09:20", intervalo_duracao: 10 },
+    { inicio: "09:30", fim: "10:30", intervalo_duracao: 15 },
+    { inicio: "10:45", fim: "11:40", intervalo_duracao: 5 },
+    { inicio: "11:45", fim: "12:35", intervalo_duracao: 85 }, // lunch break
+    { inicio: "14:00", fim: "14:50", intervalo_duracao: 10 },
+    { inicio: "15:00", fim: "15:50", intervalo_duracao: 10 },
+    { inicio: "16:00", fim: "16:50", intervalo_duracao: 10 },
+    { inicio: "17:00", fim: "18:00", intervalo_duracao: 0 }  // Última aula
+    ];
+
+    const PIXELS_PER_MINUTE = 2;
+
+    function tempoEmMinutos(tempo) {
+        const [h, m] = tempo.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    function calcularAltura(inicio, fim) {
+        const inicioMin = tempoEmMinutos(inicio);
+        const fimMin = tempoEmMinutos(fim);
+        return (fimMin - inicioMin) * PIXELS_PER_MINUTE;
+    }
+
+    function calcularTop(inicio) {
+        const inicioMin = tempoEmMinutos(inicio);
+        const inicioDoiaMin = tempoEmMinutos("08:00");
+        return (inicioMin - inicioDoiaMin) * PIXELS_PER_MINUTE;
+    }
+
+    let currentUser = null;
+    let professorById = {};
+    let professorDisciplinas = {};
+    let disciplinasDisponiveis = [];
+    let turmasDisponiveis = [];
+    let atribuicoesDisponiveis = [];
+    let professoresLista = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      currentUser = JSON.parse(userStr);
+      if (!currentUser.is_admin) {
+        alert('Acesso negado.');
+        window.location.href = 'horario.html';
+        return;
+      }
+      
+      document.getElementById('userNameDisplay').textContent = currentUser.nome;
+      carregarTodos();
+    });
+
+    function logout() {
+      if (confirm('Tem a certeza que deseja sair?')) {
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+      }
+    }
+
+    async function carregarTodos() {
+      const profTbody = document.getElementById('professores-tbody');
+      const discTbody = document.getElementById('disciplinas-tbody');
+      const turmasTbody = document.getElementById('turmas-tbody');
+      const atribTbody = document.getElementById('atribuicoes-tbody');
+      
+      try {
+        const resProf = await fetch('/admin/professores');
+        if (!resProf.ok) throw new Error('Erro a obter professores');
+        const professores = await resProf.json();
+        professoresLista = professores;
+
+        profTbody.innerHTML = '';
+        if (professores.length === 0) {
+          profTbody.innerHTML = '<tr><td colspan="6" class="text-center small-muted">Nenhum professor encontrado.</td></tr>';
+        } else {
+          professores.forEach(p => {
+            const tr = document.createElement('tr');
+            const adminBadge = p.is_admin ? '<span class="badge bg-danger me-2">Admin</span>' : '';
+            const actionButtons = p.id_professor === 1
+              ? '<span class="text-muted small">Protegido</span>'
+              : `<button class="btn btn-sm btn-warning me-1" onclick="editProfessor(${p.id_professor})">Editar</button><button class="btn btn-sm btn-danger" onclick="deleteProfessor(${p.id_professor})">Apagar</button>`;
+            tr.innerHTML = `<td><span class="badge bg-secondary">#${p.id_professor}</span></td>
+                            <td>${adminBadge}${p.nome || '—'}</td>
+                            <td><a href="mailto:${p.email}">${p.email || '—'}</a></td>
+                            <td>${p.disciplinas_permitidas || '<span class="small-muted">Nenhuma</span>'}</td>
+                            <td>${actionButtons}</td>`;
+            profTbody.appendChild(tr);
+          });
+        }
+        professorById = Object.fromEntries(professores.map(p => [p.id_professor, p.nome]));
+        
+        professorDisciplinas = {};
+        professores.forEach(p => {
+          if (p.disciplinas_permitidas) {
+            professorDisciplinas[p.id_professor] = p.disciplinas_permitidas.split(',').map(s => s.trim());
+          } else {
+            professorDisciplinas[p.id_professor] = [];
+          }
+        });
+        
+        preencherSelectProfessores();
+
+        const resDisc = await fetch('/disciplinas'); 
+        if (resDisc.ok) {
+          const disciplinas = await resDisc.json();
+          disciplinasDisponiveis = disciplinas;
+          
+          discTbody.innerHTML = '';
+          if (disciplinas.length === 0) {
+            discTbody.innerHTML = '<tr><td colspan="4" class="text-center small-muted">Nenhuma disciplina.</td></tr>';
+          } else {
+            disciplinas.forEach(d => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `<td><span class="badge bg-secondary">#${d.id_disciplina}</span></td>
+                              <td>${d.nome_disciplina || '—'}</td>
+                              <td>${d.descricao || '—'}</td>
+                              <td>
+                                <button class="btn btn-sm btn-warning me-1" onclick="editDisciplina(${d.id_disciplina})">Alterar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteDisciplina(${d.id_disciplina})">Remover</button>
+                              </td>`;
+              discTbody.appendChild(tr);
+            });
+          }
+        }
+
+        const resTurmas = await fetch('/turmas');
+        if (resTurmas.ok) {
+          const turmas = await resTurmas.json();
+          turmasDisponiveis = turmas;
+          
+          turmasTbody.innerHTML = '';
+          if (turmas.length === 0) {
+            turmasTbody.innerHTML = '<tr><td colspan="4" class="text-center small-muted">Nenhuma turma.</td></tr>';
+          } else {
+            turmas.sort((a, b) => String(a.ano).localeCompare(String(b.ano)));
+            turmas.forEach(t => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `<td><span class="badge bg-info">#${t.id_turma}</span></td>
+                              <td>${t.ano || '—'}</td>
+                              <td>${t.curso || '—'}</td>
+                              <td>
+                                <button class="btn btn-sm btn-warning me-1" onclick="editTurma(${t.id_turma})">Editar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTurma(${t.id_turma})">Apagar</button>
+                              </td>`;
+              turmasTbody.appendChild(tr);
+            });
+          }
+        }
+
+        const resAtrib = await fetch('/atribuicoes');
+        if (resAtrib.ok) {
+          const atribuicoes = await resAtrib.json();
+          atribuicoesDisponiveis = atribuicoes;
+          
+          atribTbody.innerHTML = '';
+          if (atribuicoes.length === 0) {
+            atribTbody.innerHTML = '<tr><td colspan="11" class="text-center small-muted">Nenhuma atribuição.</td></tr>';
+          } else {
+            atribuicoes.forEach(a => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `<td><span class="badge bg-success">#${a.id_atribuicao}</span></td>
+                              <td>${a.nome_disciplina || '—'}</td>
+                              <td>${a.nome_professor || '—'}</td>
+                              <td>${a.ano_turma} ${a.curso_turma || '—'}</td>
+                              <td><strong>Sala ${a.sala}</strong></td>
+                              <td>${a.dia_semana || '—'}</td>
+                              <td>${a.hora_inicio || '—'}</td>
+                              <td>${a.hora_fim || '—'}</td>
+                              <td>${a.descricao || '—'}</td>
+                              <td>
+                                <button class="btn btn-sm btn-warning me-1" onclick="editAtribuicao(${a.id_atribuicao})">Alterar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteAtribuicao(${a.id_atribuicao})">Remover</button>
+                              </td>`;
+              atribTbody.appendChild(tr);
+            });
+          }
+        }
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function preencherSelectProfessores() {
+      const select = document.getElementById('professorSelectVisualizador');
+      select.innerHTML = '<option value="">Selecione um professor...</option>';
+      professoresLista.forEach(p => {
+        select.innerHTML += `<option value="${p.id_professor}">${p.nome}</option>`;
+      });
+    }
+
+    async function visualizarHorarioProfessor() {
+      const profId = document.getElementById('professorSelectVisualizador').value;
+      if (!profId) {
+        document.getElementById('schedule').innerHTML = '';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/meu-horario/${profId}`);
+        const aulas = await res.json();
+
+        if (!Array.isArray(aulas)) {
+          console.error("Resposta inválida:", aulas);
+          return;
+        }
+
+        criarGridHorario(aulas);
+      } catch (e) {
+        console.error("Erro ao carregar horário:", e);
+      }
+    }
+
+    function criarGridHorario(aulas) {
+      const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+      const MINUTES_PER_QUARTER = 15;
+      const HOURS_AFTER_LABEL = 60;
+      const TOTAL_SCHEDULE_MINUTES = tempoEmMinutos('18:00') - tempoEmMinutos('08:00');
+      const dayHeight = TOTAL_SCHEDULE_MINUTES * PIXELS_PER_MINUTE;
+      const quarterHeight = MINUTES_PER_QUARTER * PIXELS_PER_MINUTE;
+      const hourHeight = HOURS_AFTER_LABEL * PIXELS_PER_MINUTE;
+
+      // Gerar horas com intervalos: 15 min até 13:00, depois 1 hora até 18:00
+      const horasComIntervalo = [];
+      for (let h = 8; h < 13; h++) {
+        for (let m = 0; m < 60; m += 15) {
+          horasComIntervalo.push(`${h}:${String(m).padStart(2, '0')}`);
+        }
+      }
+      for (let h = 13; h <= 18; h++) {
+        horasComIntervalo.push(`${h}:00`);
+      }
+
+      let html = `
+          <div class="grid-header"></div>
+          ${dias.map(dia => `<div class="grid-header">${dia}</div>`).join('')}
+      `;
+
+      html += `<div class="time-labels-container">
+          ${horasComIntervalo.map(h => {
+            const isAfter13 = parseInt(h.split(':')[0]) >= 13;
+            const height = isAfter13 ? `${hourHeight}px` : `${quarterHeight}px`;
+            return `<div class="time-slot-label" style="height: ${height}">${h}</div>`;
+          }).join('')}
+      </div>`;
+
+      dias.forEach(dia => {
+          html += `<div class="day-column" id="col-${dia}" style="height: ${dayHeight}px; background-size: 100% ${quarterHeight}px;"></div>`;
+      });
+
+      document.getElementById('schedule').innerHTML = html;
+
+      const diasComAulas = new Set(aulas.map(aula => aula.dia_semana));
+
+      // Adicionar aulas
+      aulas.forEach((aula, idx) => {
+          const col = document.getElementById(`col-${aula.dia_semana}`);
+          if (!col) return;
+
+          const topPx = calcularTop(aula.hora_inicio);
+          const heightPx = calcularAltura(aula.hora_inicio, aula.hora_fim);
+
+          const div = document.createElement('div');
+          div.className = `aula-block color-${idx % 8}`;
+          div.style.top = `${topPx}px`;
+          div.style.height = `${heightPx}px`;
+          div.onclick = () => openAtribuicaoModal(aula.id_atribuicao);
+
+          // Add gray break areas within the class block
+          const classStartMin = tempoEmMinutos(aula.hora_inicio);
+          const classEndMin = tempoEmMinutos(aula.hora_fim);
+
+          PERIODOS_AULAS.forEach((periodo, pIdx) => {
+              if (periodo.intervalo_duracao > 0) {
+                  const breakStartMin = tempoEmMinutos(periodo.fim);
+                  const breakEndMin = breakStartMin + periodo.intervalo_duracao;
+
+                  // Check if break overlaps with class time
+                  if (breakStartMin < classEndMin && breakEndMin > classStartMin) {
+                      const breakTopPx = Math.max(0, breakStartMin - classStartMin);
+                      const breakHeightPx = Math.min(classEndMin - breakStartMin, periodo.intervalo_duracao);
+
+                      const breakDiv = document.createElement('div');
+                      breakDiv.className = 'intervalo-block';
+                      breakDiv.style.top = `${breakTopPx}px`;
+                      breakDiv.style.height = `${breakHeightPx}px`;
+                      breakDiv.style.left = '0';
+                      breakDiv.style.width = '100%';
+                      breakDiv.style.position = 'absolute';
+                      breakDiv.style.zIndex = '16';
+                      div.appendChild(breakDiv);
+                  }
+              }
+          });
+
+          const formatarHora = (hora) => hora ? hora.substring(0, 5) : '';
+          div.innerHTML += `
+              <div class="aula-header">
+                  <div class="aula-disciplina">${aula.nome_disciplina}</div>
+                  <div class="aula-turma">${aula.turma || ''}</div>
+                  <div class="aula-info-direita">
+                    <div class="aula-horario">${formatarHora(aula.hora_inicio)} - ${formatarHora(aula.hora_fim)}</div>
+                    <div class="aula-sala">${aula.sala || ''}</div>
+                  </div>
+              </div>
+          `;
+
+          col.appendChild(div);
+      });
+    }
+
+    let currentEditId = null;
+    let currentEditType = null;
+
+    // --- PROFESSORES (Funções CRUD mantidas do anterior) ---
+    function openProfessorModal(id = null) {
+      if (id === 1) {
+        alert('O admin #1 não pode ser editado.');
+        return;
+      }
+      currentEditId = id;
+      currentEditType = 'professor';
+      document.getElementById('professorForm').reset();
+      document.getElementById('disciplinas-checkboxes').innerHTML = '';
+      
+      const disciplinasPromise = disciplinasDisponiveis.length > 0 
+        ? Promise.resolve(disciplinasDisponiveis)
+        : fetch('/disciplinas').then(r => r.json()).then(discs => {
+            disciplinasDisponiveis = discs;
+            return discs;
+          });
+      
+      const professorPromise = id 
+        ? fetch('/admin/professores').then(r => r.json()).then(profs => profs.find(x => x.id_professor === id))
+        : Promise.resolve(null);
+      
+      Promise.all([disciplinasPromise, professorPromise]).then(([discs, professor]) => {
+        preencherOpcoesDisciplinas();
+        
+        if (professor) {
+          document.getElementById('profNome').value = professor.nome || '';
+          document.getElementById('profEmail').value = professor.email || '';
+          document.getElementById('profIsAdmin').checked = professor.is_admin || false;
+          
+          if (professor.disciplinas_permitidas) {
+            const disciplinasPermitidas = professor.disciplinas_permitidas.split(',').map(s => s.trim());
+            disciplinasPermitidas.forEach(nomeDisciplina => {
+              const checkbox = document.querySelector(`input[value="${nomeDisciplina}"][data-type="disciplina"]`);
+              if (checkbox) checkbox.checked = true;
+            });
+          }
+        }
+      });
+      
+      new bootstrap.Modal(document.getElementById('professorModal')).show();
+    }
+
+    function preencherOpcoesDisciplinas() {
+      const container = document.getElementById('disciplinas-checkboxes');
+      container.innerHTML = disciplinasDisponiveis.map(d => `
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="${d.nome_disciplina}" data-type="disciplina" id="disc_${d.id_disciplina}">
+          <label class="form-check-label" for="disc_${d.id_disciplina}">${d.nome_disciplina}</label>
+        </div>
+      `).join('');
+    }
+
+    function saveProfessor() {
+      const nome = document.getElementById('profNome').value;
+      const email = document.getElementById('profEmail').value;
+      const is_admin = document.getElementById('profIsAdmin').checked ? 1 : 0;
+      
+      const checkboxesDisciplinas = document.querySelectorAll('#disciplinas-checkboxes input[type="checkbox"]:checked');
+      const disciplinas_permitidas = Array.from(checkboxesDisciplinas).map(cb => cb.value).join(', ');
+      
+      const data = {
+        nome: nome,
+        email: email,
+        disciplinas_permitidas: disciplinas_permitidas || null,
+        turmas_atribuidas: null,
+        is_admin: is_admin
+      };
+      
+      const method = currentEditId ? 'PUT' : 'POST';
+      const url = currentEditId ? `/admin/professores/${currentEditId}` : '/admin/professores';
+      
+      fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(() => {
+        bootstrap.Modal.getInstance(document.getElementById('professorModal')).hide();
+        carregarTodos();
+      });
+    }
+
+    function editProfessor(id) {
+      if (id === 1) {
+        alert('O admin #1 não pode ser editado.');
+        return;
+      }
+      openProfessorModal(id);
+    }
+    function deleteProfessor(id) {
+      if (id === 1) {
+        alert('O admin #1 não pode ser eliminado.');
+        return;
+      }
+      if (confirm('Eliminar professor?')) {
+        fetch(`/admin/professores/${id}`, { method: 'DELETE' }).then(() => carregarTodos());
+      }
+    }
+
+    // --- DISCIPLINAS ---
+    function openDisciplinaModal(id = null) {
+      currentEditId = id;
+      currentEditType = 'disciplina';
+      document.getElementById('disciplinaForm').reset();
+      
+      if (id) {
+        const disc = disciplinasDisponiveis.find(d => d.id_disciplina === id);
+        if (disc) {
+          document.getElementById('discNome').value = disc.nome_disciplina;
+          document.getElementById('discDescricao').value = disc.descricao || '';
+        }
+      }
+      new bootstrap.Modal(document.getElementById('disciplinaModal')).show();
+    }
+
+    function saveDisciplina() {
+      const data = {
+        nome_disciplina: document.getElementById('discNome').value,
+        descricao: document.getElementById('discDescricao').value
+      };
+      
+      const method = currentEditId ? 'PUT' : 'POST';
+      const url = currentEditId ? `/disciplinas/${currentEditId}` : '/disciplinas';
+      
+      fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(() => {
+        bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
+        carregarTodos();
+      });
+    }
+
+    function editDisciplina(id) { openDisciplinaModal(id); }
+    function deleteDisciplina(id) {
+      if (confirm('Remover?')) {
+        fetch(`/disciplinas/${id}`, { method: 'DELETE' }).then(() => carregarTodos());
+      }
+    }
+
+    // --- TURMAS ---
+    function openTurmaModal(id = null) {
+      currentEditId = id;
+      currentEditType = 'turma';
+      document.getElementById('turmaForm').reset();
+      if (id) {
+        const turma = turmasDisponiveis.find(t => t.id_turma === id);
+        if (turma) {
+          document.getElementById('turmaAno').value = turma.ano;
+          document.getElementById('turmaCurso').value = turma.curso;
+        }
+      }
+      new bootstrap.Modal(document.getElementById('turmaModal')).show();
+    }
+
+    function saveTurma() {
+      const data = {
+        ano: document.getElementById('turmaAno').value,
+        curso: document.getElementById('turmaCurso').value
+      };
+      const method = currentEditId ? 'PUT' : 'POST';
+      const url = currentEditId ? `/turmas/${currentEditId}` : '/turmas';
+      
+      fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(() => {
+        bootstrap.Modal.getInstance(document.getElementById('turmaModal')).hide();
+        carregarTodos();
+      });
+    }
+
+    function editTurma(id) { openTurmaModal(id); }
+    function deleteTurma(id) {
+      if (confirm('Eliminar?')) {
+        fetch(`/turmas/${id}`, { method: 'DELETE' }).then(() => carregarTodos());
+      }
+    }
+
+    // --- ATRIBUIÇÕES ---
+    function openAtribuicaoModal(id = null) {
+      currentEditId = id;
+      currentEditType = 'atribuicao';
+      document.getElementById('atribuicaoForm').reset();
+      document.getElementById('conflictAlert').style.display = 'none';
+      document.getElementById('disciplinasAlert').style.display = 'none';
+      
+      new bootstrap.Modal(document.getElementById('atribuicaoModal')).show();
+    }
+
+    function filtrarDisciplinasPorProfessor() {
+      const profId = parseInt(document.getElementById('atribProfessor').value);
+      const discSelect = document.getElementById('atribDisciplina');
+      const alertDiv = document.getElementById('disciplinasAlert');
+      
+      discSelect.innerHTML = '<option value="">Selecione...</option>';
+      alertDiv.style.display = 'none';
+      
+      if (!profId) return;
+      
+      const disciplinasPermitidas = professorDisciplinas[profId] || [];
+      
+      if (disciplinasPermitidas.length === 0) {
+        alertDiv.innerHTML = `⚠️ <strong>Atenção:</strong> Este professor não tem disciplinas permitidas configuradas.`;
+        alertDiv.style.display = 'block';
+      } else {
+        const discFiltradas = disciplinasDisponiveis.filter(d => 
+          disciplinasPermitidas.includes(d.nome_disciplina)
+        );
+        
+        if (discFiltradas.length === 0) {
+          alertDiv.innerHTML = `⚠️ <strong>Aviso:</strong> Nenhuma disciplina permitida existe no catálogo.`;
+          alertDiv.style.display = 'block';
+        } else {
+          discFiltradas.forEach(d => {
+            discSelect.innerHTML += `<option value="${d.id_disciplina}">${d.nome_disciplina}</option>`;
+          });
+        }
+      }
+    }
+
+    function saveAtribuicao() {
+      const data = {
+        id_professor: parseInt(document.getElementById('atribProfessor').value),
+        id_disciplina: parseInt(document.getElementById('atribDisciplina').value),
+        id_turma: parseInt(document.getElementById('atribTurma').value),
+        sala: parseInt(document.getElementById('atribSala').value),
+        dia_semana: document.getElementById('atribDia').value,
+        hora_inicio: document.getElementById('atribInicio').value,
+        hora_fim: document.getElementById('atribFim').value,
+        descricao: document.getElementById('atribDescricao').value
+      };
+
+      // Validation for empty required fields
+      if (!data.id_professor || !data.id_disciplina || !data.id_turma || !data.sala || !data.dia_semana || !data.hora_inicio || !data.hora_fim) {
+        document.getElementById('conflictAlert').innerText = "Todos os campos obrigatórios devem ser preenchidos.";
+        document.getElementById('conflictAlert').style.display = 'block';
+        return;
+      }
+      
+      const method = currentEditId ? 'PUT' : 'POST';
+      const url = currentEditId ? `/atribuicoes/${currentEditId}` : '/atribuicoes';
+      
+      fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(r => {
+        if (!r.ok) {
+          return r.json().then(err => {
+            document.getElementById('conflictAlert').innerText = err.error;
+            document.getElementById('conflictAlert').style.display = 'block';
+            throw new Error(err.error);
+          });
+        }
+        return r.json();
+      }).then(() => {
+        bootstrap.Modal.getInstance(document.getElementById('atribuicaoModal')).hide();
+        carregarTodos();
+      }).catch(err => console.error(err));
+    }
+
+    function editAtribuicao(id) { openAtribuicaoModal(id); }
+    function deleteAtribuicao(id) {
+      if (confirm('Remover?')) {
+        fetch(`/atribuicoes/${id}`, { method: 'DELETE' }).then(() => carregarTodos());
+      }
+    }
+  </script>
+</head>
+<body>
+  <nav class="navbar navbar-custom">
+    <div class="container-fluid">
+      <span class="navbar-brand">🎓 Gestão Escolar — Administrativo</span>
+      <div class="user-info">
+        <span id="userNameDisplay" class="user-badge">—</span>
+        <button class="btn-logout" onclick="logout()">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <div class="page-header d-flex justify-content-between align-items-center">
+      <h3>Painel de Administração Escolar</h3>
+      <button onclick="carregarTodos()" class="btn btn-light text-primary">Atualizar Dados</button>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Professores</h5>
+            <button class="btn btn-sm btn-success" onclick="openProfessorModal()">Novo</button>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-sm table-hover">
+              <thead class="table-light"><tr><th>ID</th><th>Nome</th><th>Email</th><th>Disciplinas</th><th>Ações</th></tr></thead>
+              <tbody id="professores-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-4">
+      <div class="col-lg-9">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Disciplinas</h5>
+            <button class="btn btn-sm btn-success" onclick="openDisciplinaModal()">Novo</button>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-sm table-hover">
+              <thead class="table-light"><tr><th style="width: 10%;">ID</th><th style="width: 25%;">Nome</th><th style="width: 50%;">Descrição</th><th style="width: 15%;">Ações</th></tr></thead>
+              <tbody id="disciplinas-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Turmas</h5>
+            <button class="btn btn-sm btn-success" onclick="openTurmaModal()">Novo</button>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-sm table-hover">
+              <thead class="table-light"><tr><th>ID</th><th>Ano</th><th>Curso</th><th>Ações</th></tr></thead>
+              <tbody id="turmas-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-4">
+      <div class="col-12">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Atribuições de Horários e Salas</h5>
+            <button class="btn btn-sm btn-success" onclick="openAtribuicaoModal()">Nova Atribuição</button>
+          </div>
+          <div class="table-wrap">
+            <table class="table table-sm table-hover">
+              <thead class="table-light"><tr><th>ID</th><th>Disciplina</th><th>Professor</th><th>Turma</th><th>Sala</th><th>Dia</th><th>Início</th><th>Fim</th><th>Obs.</th><th>Ações</th></tr></thead>
+              <tbody id="atribuicoes-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-4">
+      <div class="col-12">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Visualizador de Horários por Professor</h5>
+          </div>
+          <div class="mb-3">
+            <label class="form-label"><strong>Selecione um Professor:</strong></label>
+            <select class="form-control" id="professorSelectVisualizador" onchange="visualizarHorarioProfessor()">
+              <option value="">Selecione um professor...</option>
+            </select>
+          </div>
+          <div id="schedule" class="schedule-container"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modais (Professor, Disciplina, Turma, Atribuição) -->
+  <div class="modal fade" id="professorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Dados do Professor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <form id="professorForm">
+            <div class="mb-3"><label class="form-label">Nome Completo</label><input type="text" class="form-control" id="profNome" required></div>
+            <div class="mb-3"><label class="form-label">Email Institucional</label><input type="email" class="form-control" id="profEmail" required></div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="profIsAdmin">
+              <label class="form-check-label" for="profIsAdmin">É Administrador (Diretor)</label>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Disciplinas que pode lecionar</label>
+              <div class="disciplinas-container" id="disciplinas-checkboxes"></div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="saveProfessor()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="disciplinaModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Nova Disciplina</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <form id="disciplinaForm">
+            <div class="mb-3"><label class="form-label">Nome da Disciplina</label><input type="text" class="form-control" id="discNome" placeholder="Ex: Matemática" required></div>
+            <div class="mb-3"><label class="form-label">Descrição</label><textarea class="form-control" id="discDescricao"></textarea></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="saveDisciplina()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="turmaModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Dados da Turma</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <form id="turmaForm">
+            <div class="mb-3"><label class="form-label">Ano</label><input type="text" class="form-control" id="turmaAno" placeholder="Ex: 10º" required></div>
+            <div class="mb-3"><label class="form-label">Curso</label><input type="text" class="form-control" id="turmaCurso" placeholder="Ex: Científico-Humanístico" required></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="saveTurma()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="atribuicaoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Atribuição de Horário</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div id="conflictAlert" class="alert alert-warning alert-conflict" style="display:none;"></div>
+          <div id="disciplinasAlert" class="alert alert-info alert-info-disc" style="display:none;"></div>
+          <form id="atribuicaoForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Professor</label>
+                <select class="form-control" id="atribProfessor" required onchange="filtrarDisciplinasPorProfessor()">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Disciplina</label>
+                <select class="form-control" id="atribDisciplina" required>
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Turma</label>
+                <select class="form-control" id="atribTurma" required>
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Sala (1-12)</label>
+                <select class="form-control" id="atribSala" required>
+                  <option value="">Selecione...</option>
+                  <option value="1">Sala 1</option><option value="2">Sala 2</option><option value="3">Sala 3</option>
+                  <option value="4">Sala 4</option><option value="5">Sala 5</option><option value="6">Sala 6</option>
+                  <option value="7">Sala 7</option><option value="8">Sala 8</option><option value="9">Sala 9</option>
+                  <option value="10">Sala 10</option><option value="11">Sala 11</option><option value="12">Sala 12</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Dia da Semana</label>
+                <select class="form-control" id="atribDia" required>
+                  <option value="">Selecione...</option>
+                  <option value="Segunda">Segunda-feira</option><option value="Terça">Terça-feira</option>
+                  <option value="Quarta">Quarta-feira</option><option value="Quinta">Quinta-feira</option><option value="Sexta">Sexta-feira</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Hora Início</label>
+                <input type="time" class="form-control" id="atribInicio" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Hora Fim</label>
+                <input type="time" class="form-control" id="atribFim" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Observações</label>
+                <input type="text" class="form-control" id="atribDescricao">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="saveAtribuicao()">Guardar Atribuição</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.getElementById('atribuicaoModal').addEventListener('show.bs.modal', function() {
+      const profSelect = document.getElementById('atribProfessor');
+      profSelect.innerHTML = '<option value="">Selecione...</option>';
+      Object.entries(professorById).forEach(([id, nome]) => {
+        profSelect.innerHTML += `<option value="${id}">${nome}</option>`;
+      });
+
+      const discSelect = document.getElementById('atribDisciplina');
+      discSelect.innerHTML = '<option value="">Selecione um professor primeiro...</option>';
+      
+      const turmaSelect = document.getElementById('atribTurma');
+      turmaSelect.innerHTML = '<option value="">Selecione...</option>';
+      turmasDisponiveis.forEach(t => {
+        turmaSelect.innerHTML += `<option value="${t.id_turma}">${t.ano} ${t.curso}</option>`;
+      });
+
+      // Pre-fill if editing
+      if (currentEditId) {
+        const atrib = atribuicoesDisponiveis.find(a => a.id_atribuicao === currentEditId);
+        if (atrib) {
+          document.getElementById('atribProfessor').value = atrib.id_professor;
+          filtrarDisciplinasPorProfessor(); // Populate disciplina select based on professor
+          document.getElementById('atribDisciplina').value = atrib.id_disciplina;
+          document.getElementById('atribTurma').value = atrib.id_turma;
+          document.getElementById('atribSala').value = atrib.sala;
+          document.getElementById('atribDia').value = atrib.dia_semana;
+          document.getElementById('atribInicio').value = atrib.hora_inicio;
+          document.getElementById('atribFim').value = atrib.hora_fim;
+          document.getElementById('atribDescricao').value = atrib.descricao || '';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

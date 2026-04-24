@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Meu Horário — Gestão Escolar</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f4f6fb; color:#1a1a2e; font-family:system-ui, -apple-system, 'Segoe UI', Roboto, Arial; }
+    .container { max-width:1800px; }
+    .navbar-custom {
+      background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 12px 0;
+    }
+    .navbar-brand { color: white !important; font-weight: 700; font-size: 1.3rem; }
+    .user-info {
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .user-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .btn-logout {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover {
+      background: rgba(255,255,255,0.3);
+      color: white;
+      text-decoration: none;
+    }
+    .page-header {
+      background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+      border-radius: 14px;
+      color: #fff;
+      box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+      padding: 18px 20px;
+      margin-bottom: 22px;
+      border:1px solid rgba(255,255,255,0.2);
+    }
+    .page-header h3 { margin:0; font-size:1.7rem; font-weight:700; }
+    .card {
+      border-radius: 12px;
+      border: 1px solid rgba(111, 118, 190, 0.2);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14); }
+    .small-muted { color:#6b7280; font-size:0.9rem; }
+    .table-wrap { max-height:540px; overflow:auto; }
+    .disciplinas-container { max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; }
+    .form-check { margin-bottom: 8px; }
+    .alert-conflict { background-color: #fff3cd; border-color: #ffc107; color: #856404; }
+    .alert-info-disc { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+    
+    /* Estilos para o visualizador de horários com intervalos */
+    .schedule-container {
+      display: grid;
+      grid-template-columns: 80px repeat(5, 1fr);
+      border: 1px solid #ddd;
+      background-color: #fff;
+      position: relative;
+      overflow: hidden;
+      margin-top: 20px;
+      border-radius: 8px;
+    }
+    .grid-header {
+      background: #f8f9fa;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px 0;
+      border-bottom: 2px solid #dee2e6;
+      border-right: 1px solid #ddd;
+    }
+    .time-labels-container {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .time-slot-label {
+      height: 60px;
+      border-bottom: 1px solid #eee;
+      border-right: 1px solid #ddd;
+      padding: 5px;
+      font-size: 0.8rem;
+      text-align: center;
+      background: #fdfdfd;
+    }
+    .day-column {
+      position: relative;
+      border-right: 1px solid #eee;
+      background-image: linear-gradient(#eee 1px, transparent 1px);
+    }
+    .aula-block {
+      position: absolute;
+      left: 5%;
+      width: 90%;
+      background: #0d6efd;
+      color: white;
+      border-radius: 4px;
+      padding: 6px;
+      font-size: 0.8rem;
+      overflow: hidden;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .intervalo-block {
+      position: absolute;
+      left: 0%;
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.497);
+      background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 8px,
+        rgba(0,0,0,0.1) 8px,
+        rgba(0,0,0,0.1) 16px
+      );
+      border-radius: 2px;
+      z-index: 15;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+    .color-0 { background: linear-gradient(135deg, #4f46e5, #6d64f5); }
+    .color-1 { background: linear-gradient(135deg, #059669, #10b981); }
+    .color-2 { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .color-3 { background: linear-gradient(135deg, #dc2626, #ef4444); }
+    .color-4 { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+    .color-5 { background: linear-gradient(135deg, #0891b2, #06b6d4); }
+    .color-6 { background: linear-gradient(135deg, #be185d, #ec4899); }
+    .color-7 { background: linear-gradient(135deg, #065f46, #34d399); }
+    .aula-block:hover { transform: scale(1.02); z-index: 20; }
+    .aula-header { z-index: 16; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.261); display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; line-height: 1.2; font-size: 0.8rem; }
+    .aula-disciplina { font-weight: bold; }
+    .aula-turma { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px; font-size: 0.65rem; white-space: nowrap; }
+    .aula-info-direita { display: flex; flex-direction: column; gap: 2px; text-align: right; }
+    .aula-horario { font-size: 0.65rem; opacity: 0.9; line-height: 1; }
+    .aula-sala { font-size: 0.65rem; opacity: 0.9; line-height: 1; }
+  </style>
+  <script>
+    let currentUser = null;
+
+    const PERIODOS_AULAS = [
+        { inicio: "08:30", fim: "09:20", intervalo_duracao: 10 },
+        { inicio: "09:30", fim: "10:30", intervalo_duracao: 15 },
+        { inicio: "10:45", fim: "11:40", intervalo_duracao: 5 },
+        { inicio: "11:45", fim: "12:35", intervalo_duracao: 85 },
+        { inicio: "14:00", fim: "14:50", intervalo_duracao: 10 },
+        { inicio: "15:00", fim: "15:50", intervalo_duracao: 10 },
+        { inicio: "16:00", fim: "16:50", intervalo_duracao: 10 },
+        { inicio: "17:00", fim: "18:00", intervalo_duracao: 0 }
+    ];
+
+    const PIXELS_PER_MINUTE = 2;
+
+    function tempoEmMinutos(tempo) {
+        const [h, m] = tempo.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    function calcularAltura(inicio, fim) {
+        return (tempoEmMinutos(fim) - tempoEmMinutos(inicio)) * PIXELS_PER_MINUTE;
+    }
+
+    function calcularTop(inicio) {
+        return (tempoEmMinutos(inicio) - tempoEmMinutos("08:00")) * PIXELS_PER_MINUTE;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) { window.location.href = 'login.html'; return; }
+      currentUser = JSON.parse(userStr);
+      if (currentUser.is_admin) { window.location.href = 'admin.html'; return; }
+      document.getElementById('userNameDisplay').textContent = currentUser.nome;
+      carregarHorario();
+    });
+
+    function logout() {
+      if (confirm('Sair?')) { localStorage.removeItem('user'); window.location.href = 'login.html'; }
+    }
+
+    async function carregarHorario() {
+      try {
+        const res = await fetch(`/meu-horario/${currentUser.id}`);
+        const aulas = await res.json();
+        if (!Array.isArray(aulas) || aulas.length === 0) {
+          document.getElementById('schedule').innerHTML = '<div class="empty-state"><p>Nenhuma aula atribuída.</p></div>';
+          return;
+        }
+        criarGridHorario(aulas);
+      } catch (err) { console.error(err); }
+    }
+
+    function criarGridHorario(aulas) {
+      const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+      const MINUTES_PER_QUARTER = 15;
+      const HOURS_AFTER_LABEL = 60;
+      const TOTAL_SCHEDULE_MINUTES = tempoEmMinutos('18:00') - tempoEmMinutos('08:00');
+      const dayHeight = TOTAL_SCHEDULE_MINUTES * PIXELS_PER_MINUTE;
+      const quarterHeight = MINUTES_PER_QUARTER * PIXELS_PER_MINUTE;
+      const hourHeight = HOURS_AFTER_LABEL * PIXELS_PER_MINUTE;
+
+      // Gerar horas com intervalos: 15 min até 13:00, depois 1 hora até 18:00
+      const horasComIntervalo = [];
+      for (let h = 8; h < 13; h++) {
+        for (let m = 0; m < 60; m += 15) {
+          horasComIntervalo.push(`${h}:${String(m).padStart(2, '0')}`);
+        }
+      }
+      for (let h = 13; h <= 18; h++) {
+        horasComIntervalo.push(`${h}:00`);
+      }
+
+      let html = `<div class="grid-header"></div>${dias.map(dia => `<div class="grid-header">${dia}</div>`).join('')}`;
+      html += `<div class="time-labels-container">${horasComIntervalo.map(h => {
+        const isAfter13 = parseInt(h.split(':')[0]) >= 13;
+        const height = isAfter13 ? `${hourHeight}px` : `${quarterHeight}px`;
+        return `<div class="time-slot-label" style="height: ${height}">${h}</div>`;
+      }).join('')}</div>`;
+      dias.forEach(dia => { html += `<div class="day-column" id="col-${dia}" style="height: ${dayHeight}px; background-size: 100% ${quarterHeight}px;"></div>`; });
+      document.getElementById('schedule').innerHTML = html;
+
+      aulas.forEach((aula, idx) => {
+        const col = document.getElementById(`col-${aula.dia_semana}`);
+        if (!col) return;
+
+        const div = document.createElement('div');
+        div.className = `aula-block color-${idx % 8}`;
+        div.style.top = `${calcularTop(aula.hora_inicio)}px`;
+        div.style.height = `${calcularAltura(aula.hora_inicio, aula.hora_fim)}px`;
+
+        // Lógica de Intervalos DENTRO do bloco da aula
+        const classStartMin = tempoEmMinutos(aula.hora_inicio);
+        const classEndMin = tempoEmMinutos(aula.hora_fim);
+
+        PERIODOS_AULAS.forEach(periodo => {
+          if (periodo.intervalo_duracao > 0) {
+            const breakStartMin = tempoEmMinutos(periodo.fim);
+            const breakEndMin = breakStartMin + periodo.intervalo_duracao;
+
+            if (breakStartMin < classEndMin && breakEndMin > classStartMin) {
+              const breakTopInBlock = Math.max(0, breakStartMin - classStartMin);
+              const breakHeight = Math.min(classEndMin, breakEndMin) - Math.max(classStartMin, breakStartMin);
+
+              const breakDiv = document.createElement('div');
+              breakDiv.className = 'intervalo-block';
+              breakDiv.style.top = `${breakTopInBlock}px`;
+              breakDiv.style.height = `${breakHeight}px`;
+              div.appendChild(breakDiv);
+            }
+          }
+        });
+
+        const formatarHora = (hora) => hora ? hora.substring(0, 5) : '';
+        div.innerHTML += `
+          <div class="aula-header">
+            <div class="aula-disciplina">${aula.nome_disciplina}</div>
+            <div class="aula-turma">${aula.turma}</div>
+            <div class="aula-info-direita">
+              <div class="aula-horario">${formatarHora(aula.hora_inicio)} - ${formatarHora(aula.hora_fim)}</div>
+              <div class="aula-sala">${aula.sala}</div>
+            </div>
+          </div>
+        `;
+        col.appendChild(div);
+      });
+    }
+  </script>
+</head>
+<body>
+  <nav class="navbar navbar-custom"><div class="container-fluid"><span class="navbar-brand">🎓 Meu Horário</span><div class="user-info"><span id="userNameDisplay" class="user-badge">—</span><button class="btn-logout" onclick="logout()">Sair</button></div></div></nav>
+  <div class="container py-4">
+    <div class="page-header"><h2>Seu Horário Escolar</h2><p>Aulas atribuídas pela administração</p></div>
+    <div class="card p-4"><div id="schedule" class="schedule-container"></div></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
